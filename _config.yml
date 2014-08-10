@@ -1,0 +1,4 @@
+# Setup
+title: Giulio Canti
+baseurl: /
+tcomb: "<a href=\"https://github.com/gcanti/tcomb\">tcomb.js</a> is a library for Node.js and browser which allows you to check the types of JavaScript values at runtime with a simple syntax. It is great for checking external input, for testing and for adding safety to your internal code."
