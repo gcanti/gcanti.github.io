@@ -17,7 +17,7 @@
                 </div>
             </div>
         </div>
-        {% if site.env == 'production' %}
+        {% if site.env != 'development' %}
             {% include ga.html %}
         {% endif %}
     </body>
