@@ -1,0 +1,17 @@
+body {
+  margin: 40px 0;
+  color: #444;
+  font: 16px/24px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 300;
+}
+h1, h2, h3, h4 {
+  color: #000;
+  font-weight: bold;
+}
+h1 {
+  font-size: 3em;
+}
+pre {
+  background-color: #fff;
+  border: 0;
+}

@@ -5,7 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ page.title }}</title>
         <link type="text/css" rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
-        <link type="text/css" rel="stylesheet" href="{{ site.baseurl }}style.css"/>
+        <link type="text/css" rel="stylesheet" href="{{ site.baseurl }}css/style.css"/>
+        <link type="text/css" rel="stylesheet" href="{{ site.baseurl }}css/syntax.css"/>
         <style>
         </style>
     </head>
@@ -13,23 +14,25 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-8 col-md-offset-2">
-                    <h4>
-                      <a href="{{ site.baseurl }}" title="Home">{{ site.title }}</a>
-                    </h4>
+                    <!-- header -->
+                    <h1>{{ site.title }}</h1>
+                    <p>
+                        Learn {{ site.about }}, read more of my {{ site.blog }}, or say hello {{ site.email }}
+                    </p>
                     <hr/>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-8 col-md-offset-2">
-                    <h1>{{ page.title }}</h1>
+                    <br/>
+                    <!-- content -->
+                    <h2>{{ page.title }}</h2>
                     {{ content }}
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-8 col-md-offset-2">
-                    {% include comments.html %}
+                    <!--  comments -->
+                    {% if site.env == 'production' %}
+                        {% include comments.html %}
+                    {% endif %}
                 </div>
             </div>
         </div>
+        {% if site.env == 'production' %}
+            {% include ga.html %}
+        {% endif %}
     </body>
 </html>
