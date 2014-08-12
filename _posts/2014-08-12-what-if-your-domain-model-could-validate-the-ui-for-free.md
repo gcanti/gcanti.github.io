@@ -159,7 +159,7 @@ function fetch(Struct) {
     }
   }
 
-  return isValid ? new User(values) : null;
+  return isValid ? new Struct(values) : null;
 }
 
 {% endhighlight %}
