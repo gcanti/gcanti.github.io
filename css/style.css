@@ -5,13 +5,13 @@ body {
   font-weight: 300;
 }
 h1, h2, h3, h4 {
-  color: #000;
   font-weight: bold;
-}
-h1 {
-  font-size: 3em;
+  color: #000;
 }
 pre {
   background-color: #fff;
   border: 0;
+}
+.post h1.title, .post h3 {
+  margin-top: 80px;
 }

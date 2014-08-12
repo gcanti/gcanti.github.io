@@ -3,7 +3,7 @@ layout: default
 title: Giulio Canti
 ---
 
-<h1>{{ site.title }}</h1>
+<h1>{{ site.author }}</h1>
 <hr/>
 <p>
     Hi, thanks for checking out my blog. I’m a full stack web developer who loves working with open source technology.
@@ -13,22 +13,21 @@ title: Giulio Canti
 </p>
 <h2>Articles</h2>
 <ul>
-    <li>tcomb as a validator (coming soon)</li>
-    <li>tcomb and React Prop Validation (coming soon)</li>
   {% for post in site.posts %}
     <li>
-      <a href="{{ post.url }}">{{ post.date | date_to_string }} &raquo; {{ post.title }}</a>
+      <a href="{{ post.url }}">{{ post.date | date_to_string }} - {{ post.title }}</a>
     </li>
   {% endfor %}
+    <li>tcomb and React Prop Validation (coming soon)</li>
   {% for draft in site.drafts %}
     <li>
-      <a href="{{ post.url }}">{{ draft.date | date_to_string }} &raquo; {{ draft.title }}</a>
+      <a href="{{ draft.url }}">{{ draft.date | date_to_string }} - {{ draft.title }}</a>
     </li>
   {% endfor %}
 </ul>
 <h2>Projects</h2>
 
-{% for project in site.projects %}
-<h3>{{ project.name }}</h3>
-<p>{{ project.description }}</p>
+{% for id in site.projects_list %}
+<h3>{{ site.projects[id].name }}</h3>
+<p>{{ site.projects[id].description }}</p>
 {% endfor %}

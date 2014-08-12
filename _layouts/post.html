@@ -11,18 +11,16 @@
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="container post">
             <div class="row">
                 <div class="col-md-8 col-md-offset-2">
                     <!-- header -->
-                    <h1>{{ site.title }}</h1>
-                    <p>
-                        Learn {{ site.about }}, read more of my {{ site.blog }}, or say hello {{ site.email }}
-                    </p>
+                    <h1>{{ site.author }}</h1>
+                    <p>Learn {{ site.about }}, read more of my {{ site.blog }}, or say hello {{ site.email }}</p>
                     <hr/>
-                    <br/>
                     <!-- content -->
-                    <h2>{{ page.title }}</h2>
+                    <h1 class="title">{{ page.title }}</h1>
+                    <p class="text-muted">Written by {{ site.author }} on {{ page.date | date_to_string }}</p>
                     {{ content }}
                     <!--  comments -->
                     {% if site.env != 'development' %}
