@@ -1,0 +1,16 @@
+---
+layout: clean
+title: demo - tcomb-react
+---
+
+<link type="text/css" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+<script type="text/javascript" src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/react/0.11.0/react.min.js"></script>
+<script type="text/javascript" src="https://raw.githubusercontent.com/gcanti/tcomb/master/tcomb.js"></script>
+{% if site.env != 'development' %}
+<script type="text/javascript" src="https://raw.githubusercontent.com/gcanti/tcomb-react/master/tcomb-react.js"></script>
+{% else %}
+<script type="text/javascript" src="//localhost:8080/tcomb-react.js"></script>
+{% endif %}
+<script type="text/javascript" src="demo.js"></script>
+<div id="demo"></div>
