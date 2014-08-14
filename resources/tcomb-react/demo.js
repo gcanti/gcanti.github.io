@@ -7,6 +7,7 @@ $(function () {
 
   var Button = tr.Button;
 
-  append(Button({className: 'btn-success'}, 'Hi!'));
+  var onClick = function () { console.log('onClick'); };
+  append(Button({type: 'suc', onClick: onClick}, 'Hi!'));
 
 });
