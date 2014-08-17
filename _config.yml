@@ -1,5 +1,6 @@
 # Dependencies
 highlighter: pygments
+markdown: redcarpet
 
 # Setup
 title: Giulio Canti's Blog

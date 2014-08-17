@@ -23,8 +23,7 @@ You can found a demo [here](/resources/{{ page.folder }}/signup.html).
 
 Let's design the domain model for the sign up process
 
-{% highlight javascript %}
-
+```javascript
 // domain.js
 
 // A Reddit like sign up:
@@ -58,15 +57,13 @@ var User = struct({
 User.prototype.signup = function () {
   $.post('/signup', JSON.stringify(this));
 };
-
-{% endhighlight %}
+```
 
 ### The View
 
 I'll use [Bootstrap](http://getbootstrap.com) for this
 
-{% highlight html %}
-
+```html
 <!-- signup.html -->
 
 <script src="tcomb.js"></script>
@@ -85,62 +82,31 @@ I'll use [Bootstrap](http://getbootstrap.com) for this
   </div>
   <button class="btn btn-primary btn-block">Sign up</button>
 </form>
-
-{% endhighlight %}
+```
 
 ### The View Controller
 
 This is the tricky part: the controller must validate the input and show visual feedback to the
-user that something went wrong. I can exploit the default behaviour of {{ site.projects.tcomb.markdown }} 
-when the values of a type are bad: it throws an `Error`.
+user that something went wrong. It's straightforward to write a general validating function exploiting 
+the `meta.props` hash of {{ site.projects.tcomb.markdown }} structs.
 
-{% highlight javascript %}
-
+```javascript
 // signup.js
 
 $('form').on('submit', function (evt) {
   evt.preventDefault();
   // getting an instance of User means validation succeded
-  var user = validate();
+  var user = validate(User);
   if (user) {
     user.signup();
     alert('Signup info sent.');
   }
 });
 
-function validate() {
-  $('form').removeClass('has-error');
-  try {
-    return new User({
-      username: $('#username').val().trim(), 
-      password: $('#password').val().trim(),
-      email:    $('#email').val().trim() || null
-    });
-  } catch (e) {
-    $('form').addClass('has-error');
-  }
-}
-
-{% endhighlight %}
-
-If you decide later that a username must be a string with at least 4 chars and you change the
-model accordingly, you don't have to touch the view controller code.
-
-### Further Reading
-
-Obviously exploiting that behaviour is not a best practice. Luckily, relying on the `meta.props` hash 
-of {{ site.projects.tcomb.markdown }} structs, it's straightforward to write a more general validating function 
-
-{% highlight javascript %}
-
-function validate() {
-  return fetch(User);
-}
-
 // configurable validating function
 // - visual feedback is more fine grained
 // - assume inputs are named like the struct props
-function fetch(Struct) {
+function validate(Struct) {
   
   var values = {};
   var props = Struct.meta.props;
@@ -161,6 +127,7 @@ function fetch(Struct) {
 
   return isValid ? new Struct(values) : null;
 }
+```
 
-{% endhighlight %}
-
+If you decide later that a username must be a string with at least 4 chars and you change the
+model accordingly, you don't have to touch the view controller code.
