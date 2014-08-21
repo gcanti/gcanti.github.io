@@ -311,7 +311,7 @@ React.DOM.span({className: "comment"}, "// here is the heavy lifting:", React.DO
 React.DOM.b(null, "module.exports = model.bind(Model, Component);")
             ), 
             React.DOM.h2(null, "Yeah but I want to debug MY components too"), 
-            React.DOM.p(null, "For a fast solution you could instrument your code with asserts:"), 
+            React.DOM.p(null, "For a quick solution you could instrument your code with asserts:"), 
             React.DOM.pre(null, 
 "var t = require('tcomb');", React.DOM.br(null), 
 React.DOM.br(null), 
