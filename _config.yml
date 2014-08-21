@@ -15,9 +15,15 @@ about: "<a href='/about.html'>about me</a>"
 blog: "<a href='/'>blog</a>"
 projects_list:
  - tcomb
+ - tcomb-react-bootstrap
 projects:
  tcomb:
   name: tcomb
   link: https://github.com/gcanti/tcomb
-  markdown: "[tcomb.js](https://github.com/gcanti/tcomb)"
+  markdown: "[tcomb](https://github.com/gcanti/tcomb)"
   description: "<a href='https://github.com/gcanti/tcomb'>tcomb.js</a> is a library for Node.js and the browser which allows you to check the types of JavaScript values at runtime."
+ tcomb-react-bootstrap:
+  name: tcomb-react-bootstrap
+  link: https://github.com/gcanti/tcomb-react-bootstrap
+  markdown: "[tcomb-react-bootstrap](https://github.com/gcanti/tcomb-react-bootstrap)"
+  description: "<a href='https://github.com/gcanti/tcomb-react-bootstrap'>tcomb-react-bootstrap</a> aims to add a type checking layer to the awesome library <a href='https://github.com/react-bootstrap/react-bootstrap'>react-bootstrap</a> mantaining identical APIs. Check out the <a href='/resources/tcomb-react-bootstrap/playground/playground.html'>Playground</a>"
