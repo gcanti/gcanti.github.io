@@ -159,7 +159,8 @@ var Header = React.createClass({displayName: 'Header',
           React.DOM.br(null), 
           React.DOM.p(null, "This ", tcombReactBootstrapRepo('library'), " is a three days hack aiming to add a type checking layer to" + ' ' +
           "the awesome library ", React.DOM.a({href: "https://github.com/react-bootstrap/react-bootstrap"}, "react-bootstrap"), " mantaining identical APIs." + ' ' +
-          "You can opt-in during the development and opt-out in production with just a ", React.DOM.code(null, "require"), "." + ' ' +
+          "You opt-in during the prototyping (full debugging support) and then you opt-out in production with just one",  
+          React.DOM.code(null, "require"), " change." + ' ' +
           "Beware, checkings are ", React.DOM.i(null, "very"), " strict at the moment."
           )
         ), 
@@ -189,7 +190,7 @@ var Footer = React.createClass({displayName: 'Footer',
         ), 
         Col({md: 11}, 
           React.DOM.ul(null, 
-            React.DOM.li(null, tcombReactBootstrapRepo('tcomb-react-bootstrap'), " ", React.DOM.i(null, "\"tcomb bindings for react-bootstrap\"")), 
+            React.DOM.li(null, tcombReactBootstrapRepo('tcomb-react-bootstrap'), " ", React.DOM.i(null, "\"Fast prototyping: Bootstrap + React.js + debugging support\"")), 
             React.DOM.li(null, React.DOM.a({href: "https://github.com/react-bootstrap/react-bootstrap"}, "react-bootstrap"), " ", React.DOM.i(null, "\"Bootstrap 3 components built with React\"")), 
             React.DOM.li(null, React.DOM.a({href: "http://facebook.github.io/react/index.html"}, "React.js")), 
             React.DOM.li(null, React.DOM.a({href: "http://getbootstrap.com"}, "Bootstrap")), 
