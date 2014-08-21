@@ -320,7 +320,7 @@ React.DOM.br(null),
   "  render: function() {", React.DOM.br(null), 
     React.DOM.b(null, "    t.assert(t.Str.is(this.props.name), \"ouch! bad name\");"), React.DOM.br(null), 
     "    return (", React.DOM.br(null), 
-      "      <h1>Hello ", this.props.name, "</h1>", React.DOM.br(null), 
+      "      <h1>Hello {this.props.name}</h1>", React.DOM.br(null), 
     "    );", React.DOM.br(null), 
   "  }", React.DOM.br(null), 
 "});", React.DOM.br(null)
