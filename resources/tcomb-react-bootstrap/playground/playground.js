@@ -286,7 +286,7 @@ var Main = React.createClass({displayName: 'Main',
         Row(null, 
           Col({md: 12}, 
             React.DOM.h2(null, "How it works"), 
-            React.DOM.p(null, "No grammars, lexers and parsers were harmed for this experiment."), 
+            React.DOM.p(null, "No grammars, lexers or parsers were harmed for this experiment."), 
             React.DOM.p(null, "Most part of this lightweight ", tcombReactBootstrapRepo('library'), " (around 400 total LOC) is the domain model describing the react-bootstrap components."), 
             React.DOM.p(null, React.DOM.b(null, "Example"), ": This is the definition of the ", React.DOM.code(null, "Alert"), " component:"), 
             React.DOM.pre(null, 
@@ -307,7 +307,7 @@ React.DOM.br(null),
 React.DOM.br(null), 
 React.DOM.span({className: "comment"}, "// here is the heavy lifting:", React.DOM.br(null), 
 "// model.bind returns a function with the same signature of the react-bootstrap component.", React.DOM.br(null), 
-"// This new function checks the props types and then delegate the rendering to the react-bootstrap component"), React.DOM.br(null), 
+"// This new function checks the props types and then delegates the rendering to the react-bootstrap component"), React.DOM.br(null), 
 React.DOM.b(null, "module.exports = model.bind(Model, Component);")
             )
           )
