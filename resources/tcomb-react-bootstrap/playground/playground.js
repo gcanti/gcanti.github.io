@@ -161,7 +161,7 @@ var Header = React.createClass({displayName: 'Header',
           "the awesome library ", React.DOM.a({href: "https://github.com/react-bootstrap/react-bootstrap"}, "react-bootstrap"), " mantaining identical APIs." + ' ' +
           "You opt-in during the prototyping (full debugging support) and then you opt-out in production with just one",  
           React.DOM.code(null, "require"), " change." + ' ' +
-          "Beware, checkings are ", React.DOM.i(null, "very"), " strict at the moment. ", React.DOM.b(null, "If you like it, please give me a star on ", tcombReactBootstrapRepo('GitHub'))
+          "Beware, checkings are ", React.DOM.i(null, "very"), " strict at the moment."
           )
         ), 
         Col({md: 6}, 
