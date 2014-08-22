@@ -265,7 +265,7 @@ var Main = React.createClass({displayName: 'Main',
           Col({md: 6}, 
             React.DOM.p({className: "lead"}, "Choose an example"), 
             Example({onChange: this.onExampleChange}), 
-            React.DOM.p(null, "Tweak the code, try to change the ", React.DOM.code(null, "bsStyle"), " attribute"), 
+            React.DOM.p(null, React.DOM.b(null, "Tweak the code"), ": try to change the ", React.DOM.code(null, "bsStyle"), " attribute"), 
             Code({value: code, onChange: this.onCodeChange}), 
             Input({type: "checkbox", label: debuggerLabel, onChange: this.onDebuggerChange})
           ), 
