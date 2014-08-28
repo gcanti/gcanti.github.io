@@ -25653,7 +25653,7 @@ var defaultExample = 'primitives';
 var results = [];
 window.validate = function (value, type, opts) {
   var result = v(value, type, opts);
-  //console.log(result);
+  console.log(result);
   results.push(result);
   return result;
 };
@@ -25786,7 +25786,7 @@ var Main = React.createClass({displayName: 'Main',
         Header(null), 
         Row(null, 
           Col({md: 6}, 
-            React.DOM.p({className: "lead"}, "Choose an example"), 
+            React.DOM.p({className: "lead"}, "Choose a code example, or write your own"), 
             React.DOM.p({className: "text-muted"}, "Open up the console for a complete debugging experience.."), 
             Example({name: this.state.name, onChange: this.onExampleChange}), 
             Input({
