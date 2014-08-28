@@ -25671,7 +25671,7 @@ var Header = React.createClass({displayName: 'Header',
           React.DOM.p({className: "text-muted"}, "A brand new general purpose validation library for JavaScript"), 
           React.DOM.br(null), 
           React.DOM.p(null, 
-            "Concise yet expressive syntax, full debugging support, seamless integration with React and Backbone."
+            React.DOM.strong(null, "Concise yet expressive syntax, full debugging support, seamless integration with React and Backbone.")
           )
         ), 
         Col({md: 6}, 
