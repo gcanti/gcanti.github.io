@@ -16,6 +16,7 @@ blog: "<a href='/'>blog</a>"
 projects_list:
  - tcomb
  - tcomb-react-bootstrap
+ - tcomb-validation
 projects:
  tcomb:
   name: tcomb
@@ -27,3 +28,8 @@ projects:
   link: https://github.com/gcanti/tcomb-react-bootstrap
   markdown: "[tcomb-react-bootstrap](https://github.com/gcanti/tcomb-react-bootstrap)"
   description: "<a href='https://github.com/gcanti/tcomb-react-bootstrap'>tcomb-react-bootstrap</a> aims to add a type checking layer to the awesome library <a href='https://github.com/react-bootstrap/react-bootstrap'>react-bootstrap</a> mantaining identical APIs. Check out the <a href='/resources/tcomb-react-bootstrap/playground/playground.html'>Playground</a>"
+ tcomb-validation:
+  name: tcomb-validation
+  link: https://github.com/gcanti/tcomb-validation
+  markdown: "[tcomb-validation](https://github.com/gcanti/tcomb-validation)"
+  description: "<a href='https://github.com/gcanti/tcomb-validation'>tcomb-validation</a> ia a general purpose validation library for JavaScript. Check out the <a href='/resources/tcomb-validation/playground/playground.html'>Playground</a>"

@@ -52,6 +52,7 @@ My bigger complaints are:
 1. by default props are optionals, it can lead to subtle bugs
 2. sometimes React issues cryptic warning messages
 3. I can't express refinements without defining [custom props](http://facebook.github.io/react/docs/reusable-components.html)
+4. TODO: testare come si comporta React con le unioni, come riesce a fare i dispatch?
 
 ```javascript
 var r = require('react').PropTypes;
