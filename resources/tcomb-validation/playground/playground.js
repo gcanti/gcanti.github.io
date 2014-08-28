@@ -25810,7 +25810,7 @@ var Main = React.createClass({displayName: 'Main',
               )
               : 
               React.DOM.div(null, 
-                React.DOM.p({className: "lead"}, "Validation"), 
+                React.DOM.p({className: "lead"}, "Validation result"), 
                 Validation({results: err instanceof Error ? err : results})
               )
             
