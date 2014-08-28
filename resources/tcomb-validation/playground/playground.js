@@ -25787,6 +25787,7 @@ var Main = React.createClass({displayName: 'Main',
         Row(null, 
           Col({md: 6}, 
             React.DOM.p({className: "lead"}, "Choose an example"), 
+            React.DOM.p({className: "text-muted"}, "Open up the console for a complete debugging experience.."), 
             Example({name: this.state.name, onChange: this.onExampleChange}), 
             Input({
               type: "textarea", 
