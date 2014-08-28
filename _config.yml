@@ -32,4 +32,4 @@ projects:
   name: tcomb-validation
   link: https://github.com/gcanti/tcomb-validation
   markdown: "[tcomb-validation](https://github.com/gcanti/tcomb-validation)"
-  description: "<a href='https://github.com/gcanti/tcomb-validation'>tcomb-validation</a> ia a general purpose validation library for JavaScript. Check out the <a href='/resources/tcomb-validation/playground/playground.html'>Playground</a>"
+  description: "<a href='https://github.com/gcanti/tcomb-validation'>tcomb-validation</a> is a general purpose validation library for JavaScript. Check out the <a href='/resources/tcomb-validation/playground/playground.html'>Playground</a>"
