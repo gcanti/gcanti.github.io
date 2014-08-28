@@ -19,6 +19,10 @@ I'll show you how to achive this goal with a simple example, a sign up form.
 
 You can found a demo [here](/resources/{{ page.folder }}/signup.html).
 
+### Implementation
+
+For a complete implementation of the ideas exposed in this post see the [tcomb-validation](https://github.com/gcanti/tcomb-validation) library.
+
 ### The Model
 
 Let's design the domain model for the sign up process
