@@ -38,4 +38,4 @@ projects:
   name: react-vdom
   link: https://github.com/gcanti/react-vdom
   markdown: "[react-vdom](https://github.com/gcanti/react-vdom)"
-  description: "<a href='https://github.com/gcanti/react-vdom'>react-vdom</a> is a library to retrieve the VDOM of a React component. Check out the <a href='/resources/react-vdom/playground/playground.html'>Playground</a>"  
+  description: "<a href='https://github.com/gcanti/react-vdom'>react-vdom</a> is a library for retrieving the VDOM of a React component. Check out the <a href='/resources/react-vdom/playground/playground.html'>Playground</a>"  
