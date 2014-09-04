@@ -15,7 +15,7 @@ $(function () {
       label: 'Spinner'
     },
     todo: {
-      label: '`TodoItem` component of React TodoMVC'
+      label: 'TodoItem of React TodoMVC'
     }
   };
 
