@@ -25650,7 +25650,7 @@ var Documentation = React.createClass({displayName: 'Documentation',
   render: function () {
     return (
       React.DOM.div({className: "docs"}, 
-        React.DOM.p({className: "lead"}, "Check out the documentation:"), 
+        React.DOM.p({className: "lead"}, "Check out the documentation (auto generated from the underlying domain model):"), 
         React.DOM.p({className: "text-right"}, React.DOM.em({className: "text-muted"}, React.DOM.code(null, "maybe(Type)"), " means an optional instance of ", React.DOM.code(null, "Type"))), 
         React.DOM.div({dangerouslySetInnerHTML: {__html: toMarkdown(this.props.componentName)}})
       )
