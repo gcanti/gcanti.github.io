@@ -12,6 +12,12 @@ title: Giulio Canti
 <p>
     I'm available for hire, learn {{ site.about }}.
 </p>
+<h2>Projects</h2>
+
+{% for id in site.projects_list %}
+<h3><a href="{{ site.projects[id].link }}">{{ site.projects[id].name }}</a></h3>
+<p>{{ site.projects[id].description }}</p>
+{% endfor %}
 <h2>Articles</h2>
 <ul>
   {% for post in site.posts %}
@@ -19,16 +25,9 @@ title: Giulio Canti
       <a href="{{ post.url }}">{{ post.date | date_to_string }} - {{ post.title }}</a>
     </li>
   {% endfor %}
-    <li>tcomb and React Prop Validation (coming soon)</li>
   {% for draft in site.drafts %}
     <li>
       <a href="{{ draft.url }}">{{ draft.date | date_to_string }} - {{ draft.title }}</a>
     </li>
   {% endfor %}
 </ul>
-<h2>Projects</h2>
-
-{% for id in site.projects_list %}
-<h3>{{ site.projects[id].name }}</h3>
-<p>{{ site.projects[id].description }}</p>
-{% endfor %}

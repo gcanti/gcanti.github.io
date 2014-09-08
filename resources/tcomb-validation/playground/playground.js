@@ -27001,36 +27001,15 @@ var Header = React.createClass({displayName: 'Header',
     return (
       Row({className: "header"}, 
         Col({md: 6}, 
-          React.DOM.h1(null, repo('tcomb-validation'), " playground"), 
-          React.DOM.p({className: "text-muted"}, "A JavaScript validation library based on type combinators"), 
-          React.DOM.br(null), 
-          React.DOM.p(null, 
-            "Concise yet expressive syntax, full debugging support, seamless integration with React and Backbone."
-          )
+          React.DOM.h1(null, React.DOM.a({href: "https://github.com/gcanti/tcomb-validation"}, "tcomb-validation"), " playground"), 
+          React.DOM.p({className: "text-muted"}, "A JavaScript validation library based on type combinators")
         ), 
         Col({md: 6}, 
-          React.DOM.div({className: "text-right repo-link"}, 
-              React.DOM.p(null, "My ", React.DOM.a({href: "/"}, "blog"))
-          )
-        )
-      )
-    );
-  }
-});
-
-var Footer = React.createClass({displayName: 'Footer',
-  render: function () {
-    return (
-      Row({className: "text-muted"}, 
-        Col({md: 1}, 
-          React.DOM.strong(null, "Credits:")
-        ), 
-        Col({md: 11}, 
-          React.DOM.ul(null, 
-            React.DOM.li(null, repo('tcomb-validation'), " ", React.DOM.i(null, "\"General purpose validation library for JavaScript\"")), 
-            React.DOM.li(null, repo('tcomb'), " ", React.DOM.i(null, "\"Pragmatic runtime type checking for JavaScript \"")), 
-            React.DOM.li(null, React.DOM.a({href: "http://facebook.github.io/react/index.html"}, "React.js")), 
-            React.DOM.li(null, React.DOM.a({href: "http://backbonejs.org"}, "Backbone.js"))
+          React.DOM.div({className: "repo-link"}, 
+              React.DOM.p(null, 
+                "Concise yet expressive syntax, full debugging support, seamless integration with React and Backbone."
+              ),
+              React.DOM.p(null, "My other ", React.DOM.a({href: "/"}, "projects"))
           )
         )
       )
@@ -27161,7 +27140,7 @@ var Main = React.createClass({displayName: 'Main',
     var code = this.state.code;
     var err = this.eval(code);
     return (
-      Grid(null, 
+      React.DOM.div(null, 
         Header(null), 
         Row(null, 
           Col({md: 6}, 
@@ -27191,9 +27170,7 @@ var Main = React.createClass({displayName: 'Main',
               )
             
           )
-        ), 
-        React.DOM.hr(null), 
-        Footer(null)
+        )
       )
     );
   }

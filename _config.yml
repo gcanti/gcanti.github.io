@@ -15,27 +15,27 @@ about: "<a href='/about.html'>about me</a>"
 blog: "<a href='/'>blog</a>"
 projects_list:
  - tcomb
- - tcomb-react-bootstrap
  - tcomb-validation
- - react-vdom
+ - tcomb-react
+ - tcomb-react-bootstrap
 projects:
  tcomb:
   name: tcomb
   link: https://github.com/gcanti/tcomb
   markdown: "[tcomb](https://github.com/gcanti/tcomb)"
-  description: "<a href='https://github.com/gcanti/tcomb'>tcomb.js</a> is a library for Node.js and the browser which allows you to check the types of JavaScript values at runtime."
+  description: "Pragmatic runtime type checking for JavaScript."
+ tcomb-react:
+  name: tcomb-react
+  link: https://github.com/gcanti/tcomb-react
+  markdown: "[tcomb-react](https://github.com/gcanti/tcomb-react)"
+  description: "Type checking for React components."
  tcomb-react-bootstrap:
   name: tcomb-react-bootstrap
   link: https://github.com/gcanti/tcomb-react-bootstrap
   markdown: "[tcomb-react-bootstrap](https://github.com/gcanti/tcomb-react-bootstrap)"
-  description: "<a href='https://github.com/gcanti/tcomb-react-bootstrap'>tcomb-react-bootstrap</a> aims to add a type checking layer to the awesome library <a href='https://github.com/react-bootstrap/react-bootstrap'>react-bootstrap</a> mantaining identical APIs. Check out the <a href='/resources/tcomb-react-bootstrap/playground/playground.html'>Playground</a>"
+  description: "Type checking for <a href='https://github.com/react-bootstrap/react-bootstrap'>react-bootstrap</a>. Check out the <a href='/resources/tcomb-react-bootstrap/playground/playground.html'>Playground</a>."
  tcomb-validation:
   name: tcomb-validation
   link: https://github.com/gcanti/tcomb-validation
   markdown: "[tcomb-validation](https://github.com/gcanti/tcomb-validation)"
-  description: "<a href='https://github.com/gcanti/tcomb-validation'>tcomb-validation</a> is a general purpose validation library for JavaScript. Check out the <a href='/resources/tcomb-validation/playground/playground.html'>Playground</a>"
- react-vdom:
-  name: react-vdom
-  link: https://github.com/gcanti/react-vdom
-  markdown: "[react-vdom](https://github.com/gcanti/react-vdom)"
-  description: "<a href='https://github.com/gcanti/react-vdom'>react-vdom</a> is a library for retrieving the VDOM of a React component. Check out the <a href='/resources/react-vdom/playground/playground.html'>Playground</a>"  
+  description: "A general purpose JavaScript validation library based on type combinators. Check out the <a href='/resources/tcomb-validation/playground/playground.html'>Playground</a>."
