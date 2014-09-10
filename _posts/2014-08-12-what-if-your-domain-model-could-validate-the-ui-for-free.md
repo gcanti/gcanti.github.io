@@ -4,10 +4,7 @@ title: What if your domain model could validate the UI for free?
 folder: what-if-your-domain-model-could-validate-the-ui-for-free
 ---
 
-### The Idea
-
-Welcome to the first in a series of posts on tcomb features.
-{{ site.projects.tcomb.description }}  If you don't know tcomb, please take a look at the <a href='https://github.com/gcanti/tcomb'>GitHub repo</a> (and if you like what you see, give me a star :)
+## The Idea
 
 Does the world need another validation library? Probably not, but I think of tcomb more as a tool to build 
 fast and safe domain models. Since I want the **models be the single source of truth** and 
@@ -15,15 +12,15 @@ it's hard to keep my models and the UI validation rules synced, I think there is
 The models should already express those validation rules so I only need to make them explicits.
 I'll show you how to achive this goal with a simple example, a sign up form.
 
-### Demo
+## Demo
 
 You can found a demo [here](/resources/{{ page.folder }}/signup.html).
 
-### Implementation
+## [UPDATE] Implementation
 
-For a complete implementation of the ideas exposed in this post see the [tcomb-validation](https://github.com/gcanti/tcomb-validation) library.
+For a complete implementation of the ideas exposed in this post see the [tcomb-validation](https://github.com/gcanti/tcomb-validation) library on GitHub.
 
-### The Model
+## The Model
 
 Let's design the domain model for the sign up process
 
@@ -63,7 +60,7 @@ User.prototype.signup = function () {
 };
 ```
 
-### The View
+## The View
 
 I'll use [Bootstrap](http://getbootstrap.com) for this
 
@@ -88,7 +85,7 @@ I'll use [Bootstrap](http://getbootstrap.com) for this
 </form>
 ```
 
-### The View Controller
+## The View Controller
 
 This is the tricky part: the controller must validate the input and show visual feedback to the
 user that something went wrong. It's straightforward to write a general validating function exploiting 

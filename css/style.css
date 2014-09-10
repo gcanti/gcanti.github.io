@@ -16,6 +16,13 @@ pre {
   background-color: #fafafa;
   border: 0;
 }
-.post h1.title, .post h3 {
+.post h1.title {
   margin-top: 80px;
+}
+.post h2 {
+  margin: 60px 0 20px 0;
+}
+code {
+  color: #000;
+  background-color: #f0f0f0;
 }
