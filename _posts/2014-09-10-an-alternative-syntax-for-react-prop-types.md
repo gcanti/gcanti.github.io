@@ -99,7 +99,7 @@ var SafeAlert = t.react.bind(Alert, AlertProps, {strict: true});
 
 Features:
 
-1. by default props are required, a **saner default** since it's quite simple to forget `.isRequired`
+1. by default props are required, a **saner default** since it's quite easy to forget `.isRequired`
 2. when a validation fails, **the debugger kicks in** so you can inspect the stack and quickly find out what's wrong
 3. `{strict: true}` means all unspecified props are not allowed
 4. global contraints can be specified with `subtype` syntax
@@ -108,6 +108,10 @@ Features:
 ## Implementation
 
 For a complete implementation of the ideas exposed in this post see the [tcomb-react](https://github.com/gcanti/tcomb-react) library on GitHub.
+
+## Playground
+
+If you want to see tcomb-react in action, check out the [playground](http://gcanti.github.io/resources/tcomb-react-bootstrap/playground/playground.html) of tcomb-react-bootstrap, an attempt to add a type checking layer to the components of [react-bootstrap](http://react-bootstrap.github.io/).
 
 ## Comparison table
 

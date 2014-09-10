@@ -15,13 +15,12 @@ title: Type checking for react-bootstrap
       <h3>Constraint examples</h3>
       <p>Some constraints among others enforced by this library:</p>
       <ul>
-        <li>`Alert`: `onDismiss` and `dismissAfter` must either or neither passed</li>
         <li>`ButtonGroup`: can have only `Button` children (in fact, at least two)</li>
         <li>`Col`: props must be integers between 1 and 12</li>
         <li>`Glyphicon`: can't have children</li>
         <li>`Nav`: bsStyle must be one of `pills`, `tabs`</li>
       </ul>
-      <p>For now the constraints are quite relaxed in order to allow an easier demo, however they can be tighten up to the point of accepting only whitelisted props.</p>
+      <p>For now the constraints are quite relaxed in order to allow an easier demo (<code>{strict: false}</code>), however they can be tighten up to the point of accepting only whitelisted props.</p>
     </div>
 <script type="text/example" id="Alert"><Alert bsStyle="warning">
   <strong>Holy guacamole!</strong>
