@@ -123,11 +123,10 @@ console.log(data.posts[0] instanceof Post); // => true
 
 ```js
 // this holds
-assert.deepEqual(data, payload);
 JSON.stringify(data) === JSON.stringify(payload);
 ```
 
-So `Payload`, `Comment` and `Post` can be used on the server domain model too :)
+So tcomb `Payload`, `Comment` and `Post` can be shared with the server domain model too and then sent over-the-wire :)
 
 ## Reference
 
