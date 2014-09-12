@@ -119,6 +119,15 @@ var data = new Payload(payload);
 console.log(data.posts[0] instanceof Post); // => true
 ```
 
+## Last note
+
+```js
+// this holds
+assert.deepEqual(data, payload);
+```
+
+So `Payload`, `Comment` and `Post` can be used on the server domain model too :)
+
 ## Reference
 
 For a reference of the tcomb library see [here](https://github.com/gcanti/tcomb) on GitHub.
