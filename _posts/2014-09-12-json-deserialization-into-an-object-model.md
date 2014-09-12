@@ -119,15 +119,6 @@ var data = new Payload(payload);
 console.log(data.posts[0] instanceof Post); // => true
 ```
 
-## Last note
-
-```js
-// this holds
-JSON.stringify(data) === JSON.stringify(payload);
-```
-
-So tcomb `Payload`, `Comment` and `Post` can be shared with the server domain model too and then sent over-the-wire :)
-
 ## Reference
 
 For a reference of the tcomb library see [here](https://github.com/gcanti/tcomb) on GitHub.
