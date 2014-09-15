@@ -5,15 +5,15 @@ title: JSON API Validation In Node.js
 
 ## The Problem
 
-In the last post ([JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html)) I've presented a good solution for consuming a JSON API on the client, but what about the server? 
+In the last post ([JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html)) I've showed a good solution for consuming a JSON API on the client, but what about the server? 
 
-On the client type checking is an invaluable tool (especially in development) but on the server the matter is more critical:
+While on the client type checking is a plus (especially in development), on the server the matter is more critical:
 
 - you can't assume the correctness of the payloads so you must always **validate** the receiving data
 - when requests are bad, you should respond with **meaningful error messages** to help your API users
 - you must **write and maintain** extensive api documentation
 
-In this post I'll show you how this work can be done in **a few lines of code with the bonus of providing a contract to your API users**, with the help of [tcomb-validation](https://github.com/gcanti/tcomb-validation). 
+In this post I'll show you how this work can be done in **a few lines of code and with the bonus of providing a contract to your API users**, with the help of [tcomb-validation](https://github.com/gcanti/tcomb-validation). 
 
 tcomb-validation is a a general purpose JavaScript validation library based on [type combinators](https://github.com/gcanti/tcomb).
 
@@ -80,7 +80,7 @@ module.exports = {
 
 And now the code of the server application:
 
-## API Validation
+## Payload Validation
 
 ```js
 // app.js
@@ -112,20 +112,16 @@ app.post('/signup', function (req, res) {
 });
 ```
 
-That's it.
+## API Contract
 
-## API Client
-
-Now the good news. 
-
-As a consequence of what I showed in [JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html), if you **open source** the `domain.js` file you can provide to your API users a:
+As a consequence of what presented in [JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html), if you **open source** the `domain.js` file you can provide to your API users a:
 
 - cheap
 - (auto) documented
 - type checked (with descriptive error messages)
-- tested
+- already tested
 - easy to use
-- **always synced and versioned with your API**
+- **versioned with your API**
 
 minimal JavaScript client.
 
@@ -140,7 +136,7 @@ contains:
 
 - the `domain.js` file shared among server and client
 - an express app implementing the SignUp API
-- a simple HTML client implementing client side validation based on `domain.js`
+- a simple HTML client implementing auto client side validation based on `domain.js`
 
 
 
