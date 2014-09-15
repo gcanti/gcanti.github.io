@@ -13,7 +13,7 @@ On the client type checking is an invaluable tool (especially in development) bu
 - when requests are bad, you should respond with **meaningful error messages** to help your API users
 - you must **write and maintain** extensive api documentation
 
-In this post I'll show you how this work can be done in **a few lines of code with the bonus of providing a default client to your API users**, with the help of [tcomb-validation](https://github.com/gcanti/tcomb-validation). 
+In this post I'll show you how this work can be done in **a few lines of code with the bonus of providing a contract to your API users**, with the help of [tcomb-validation](https://github.com/gcanti/tcomb-validation). 
 
 tcomb-validation is a a general purpose JavaScript validation library based on [type combinators](https://github.com/gcanti/tcomb).
 
@@ -118,7 +118,7 @@ That's it.
 
 Now the good news. 
 
-As a consequence of what I showed in [JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html), if you **open source** the `domain.js` file you can provide a:
+As a consequence of what I showed in [JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html), if you **open source** the `domain.js` file you can provide to your API users a:
 
 - cheap
 - (auto) documented
@@ -127,7 +127,7 @@ As a consequence of what I showed in [JSON Deserialization Into An Object Model]
 - easy to use
 - **always synced and versioned with your API**
 
-default minimal JavaScript client to your API users.
+minimal JavaScript client.
 
 ## Reference
 
