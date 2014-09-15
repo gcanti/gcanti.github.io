@@ -122,3 +122,7 @@ console.log(data.posts[0] instanceof Post); // => true
 ## Reference
 
 For a reference of the tcomb library see [here](https://github.com/gcanti/tcomb) on GitHub.
+
+## Further reading
+
+The Part II of this post: [JSON API Validation In Node.js](/2014/09/15/json-api-validation-in-node.html).

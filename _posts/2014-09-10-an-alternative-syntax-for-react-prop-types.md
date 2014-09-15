@@ -111,7 +111,7 @@ For a complete implementation of the ideas exposed in this post see the [tcomb-r
 
 ## Playground
 
-If you want to see tcomb-react in action, check out the [playground](http://gcanti.github.io/resources/tcomb-react-bootstrap/playground/playground.html) of tcomb-react-bootstrap, an attempt to add a type checking layer to the components of [react-bootstrap](http://react-bootstrap.github.io/).
+If you want to see tcomb-react in action, check out the [playground](/resources/tcomb-react-bootstrap/playground/playground.html) of tcomb-react-bootstrap, an attempt to add a type checking layer to the components of [react-bootstrap](http://react-bootstrap.github.io/).
 
 ## Comparison table
 
