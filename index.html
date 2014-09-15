@@ -12,12 +12,6 @@ title: Giulio Canti
 <p>
     I'm available for hire, learn {{ site.about }}.
 </p>
-<h2>Projects</h2>
-
-{% for id in site.projects_list %}
-<h3><a href="{{ site.projects[id].link }}">{{ site.projects[id].name }}</a></h3>
-<p>{{ site.projects[id].description }}</p>
-{% endfor %}
 <h2>Articles</h2>
 <ul>
   {% for post in site.posts %}
@@ -31,3 +25,9 @@ title: Giulio Canti
     </li>
   {% endfor %}
 </ul>
+<h2>Projects</h2>
+
+{% for id in site.projects_list %}
+<h3><a href="{{ site.projects[id].link }}">{{ site.projects[id].name }}</a></h3>
+<p>{{ site.projects[id].description }}</p>
+{% endfor %}
