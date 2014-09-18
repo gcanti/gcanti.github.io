@@ -20188,6 +20188,9 @@ $(function () {
     },
     value: {
       label: 'How to set default values'
+    },
+    global: {
+      label: 'How to set constraints on the whole form'
     }
   };
 
