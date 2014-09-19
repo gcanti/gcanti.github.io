@@ -13,15 +13,6 @@
   input.getValue() -> validate.Result | type
   input.setErrors(errors: maybe(list(Err)))
 
-  - Default conversions from types to inputs
-
-  Str -> textbox, textarea
-  Num -> textbox
-  Bool -> checkbox
-  enums -> select, radio
-  struct -> form
-  list(struct) -> table
-
 */
 
 var React = require('react');
@@ -164,6 +155,13 @@ function getValue(type) {
     this.setErrors(result.errors);
     return result.isValid() ? type(value) : result;
   };
+}
+
+function getOptionalLabel(name, optional) {
+  name = humanize(name);
+  return optional ?
+    React.DOM.span(null, name, React.DOM.small({className: "text-muted"}, optional)) :
+    React.DOM.span(null, name);
 }
 
 var I17n = struct({
@@ -495,11 +493,11 @@ var form = func([FormType, maybe(FormOpts)], function (type, opts) {
 
       // checkboxes and radios need always a label
       if (Input === checkbox || Input === radio) {
-        o.label = o.label || React.DOM.span(null, humanize(name), React.DOM.small({className: "text-muted"}, optional));
+        o.label = o.label || getOptionalLabel(name, optional);
       }
 
       if (auto === 'labels') {
-        o.label = o.label || React.DOM.span(null, humanize(name), React.DOM.small({className: "text-muted"}, optional));
+        o.label = o.label || getOptionalLabel(name, optional);
         if (Input === select) {
           o.emptyOption = o.emptyOption || {value: '', text: '-'};
         }
@@ -20231,7 +20229,7 @@ $(function () {
       label: 'Subtypes'
     },
     customize: {
-      label: 'Fields customization'
+      label: 'Booleans and fields customization'
     },
     enumsSelect: {
       label: 'Enums: render as select (default)'
