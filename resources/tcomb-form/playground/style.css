@@ -17,8 +17,8 @@ pre {
 }
 
 .CodeMirror {
-  font-family: Menlo, Consolas, monospace;
-  font-size: 12px;
+  font-family: Menlo, monospace;
+  font-size: 13px;
   line-height: 1.5;
   height: 350px;
   padding: 10px 10px;

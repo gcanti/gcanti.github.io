@@ -23245,11 +23245,10 @@ $(function () {
   var $formValues = $('#formValues');
   var $examples =   $('#examples .list-group-item');
   var POSTFIX =     $('#postfix').html();
-  var JSX_PREAMBLE = '/** @jsx React.DOM */\n';
 
   function evalCode(code) {
     try {
-      var js = JSXTransformer.transform(JSX_PREAMBLE + code + POSTFIX).code;
+      var js = code + POSTFIX;
       return eval(js);
     } catch (e) {
       return e;
