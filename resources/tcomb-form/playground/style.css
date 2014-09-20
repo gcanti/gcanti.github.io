@@ -5,11 +5,11 @@ body {
 pre {
   background-color: transparent;
   border: 0;  
+  padding: 0px;
 }
 
 .header {
   border-bottom: 1px solid #eee;
-  margin-bottom: 20px;
 }
 
 .repo-link { 
@@ -28,6 +28,12 @@ pre {
 
 #preview {
   margin-bottom: 40px;
+  background-color: #f9f9f9;
+  padding: 20px;
+}
+
+#html {
+  font-size: 11px;
 }
 
 #examplesGroup .list-group-item:hover {

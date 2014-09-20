@@ -23271,6 +23271,7 @@ $(function () {
     var html = $('#preview div div').html();
     html = html.replace(/data-reactid="(.[^"]*)"/gm, '');
     $html.html(escapeHtml(beautifyHtml(html)));
+    hljs.highlightBlock($html.get(0));
   }
 
   function renderFormValues(value) {
