@@ -71,7 +71,20 @@ React.createClass({
   }
 });
 </script>
-<script type="text/example" id="lists">var Person = struct({
+<script type="text/example" id="lists">var Tags = list(Str);
+
+var Form = createList(Tags);
+</script>
+<script type="text/example" id="listOfStructs">var Person = struct({
+  name: Str,
+  surname: Str
+});
+
+var Persons = list(Person);
+
+var Form = createList(Persons);
+</script>
+<script type="text/example" id="nestedLists">var Person = struct({
   name: Str,
   surname: Str
 });
