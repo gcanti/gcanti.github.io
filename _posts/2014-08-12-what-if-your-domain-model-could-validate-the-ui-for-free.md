@@ -18,7 +18,7 @@ You can found a demo [here](/resources/{{ page.folder }}/signup.html).
 
 ## [UPDATE] Implementation
 
-For a complete implementation of the ideas exposed in this post see the [tcomb-validation](https://github.com/gcanti/tcomb-validation) library on GitHub.
+For an implementation of the ideas exposed in this post see the [tcomb-form](https://github.com/gcanti/tcomb-form) library on GitHub.
 
 ## The Model
 
