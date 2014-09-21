@@ -40,7 +40,6 @@ var Result =      t.validate.Result;
 
 var Type = irriducible('Type', isType);
 
-// represents an order (asc or desc)
 var Order = enums({
   asc: function (a, b) {
     return a.text < b.text ? -1 : a.text > b.text ? 1 : 0;
@@ -96,6 +95,37 @@ function getOrElse(value, defaultValue) {
   return Nil.is(value) ? defaultValue : value;
 }
 
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+
+function getChoices(map, order, emptyChoice) {
+  var choices = Object.keys(map).map(function (value, i) {
+    return {value: value, text: map[value]};
+  });
+  // apply an order (asc, desc) to options
+  choices.sort(Order.meta.map[order] || 'asc');
+  if (emptyChoice) {
+    // add an empty choice to the beginning
+    choices.unshift(emptyChoice);
+  }
+  return choices;
+}
+
+//
+// jsx utils
+//
+
+function getOptionalLabel(name, optional) {
+  name = humanize(name);
+  return optional ?
+    React.DOM.span(null, name, React.DOM.small({className: "text-muted"}, optional)) :
+    React.DOM.span(null, name);
+}
+
 function getLabel(label) {
   return label ? React.DOM.label({className: "control-label label-class"}, label) : null;
 }
@@ -104,12 +134,17 @@ function getHelp(help) {
   return help ? React.DOM.span({className: "help-block"}, help) : null;
 }
 
-function uuid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-    return v.toString(16);
+// returns the list of options of a select
+function getOptions(map, order, emptyOption) {
+  var choices = getChoices(map, order, emptyOption);
+  return choices.map(function (c, i) {
+    return React.DOM.option({key: i, value: c.value}, c.text);
   });
 }
+
+//
+// array manipulation
+//
 
 function remove(arr, index) {
   var ret = arr.slice();
@@ -135,40 +170,9 @@ function moveDown(arr, i) {
   return move(arr, i, i + 1);
 }
 
-function getChoices(map, order, emptyChoice) {
-  var choices = Object.keys(map).map(function (value, i) {
-    return {value: value, text: map[value]};
-  });
-  // apply an order (asc, desc) to options
-  choices.sort(Order.meta.map[order] || 'asc');
-  if (emptyChoice) {
-    // add an empty choice to the beginning
-    choices.unshift(emptyChoice);
-  }
-  return choices;
-}
-
-// returns the list of options of a select
-function getOptions(map, order, emptyOption) {
-  var choices = getChoices(map, order, emptyOption);
-  return choices.map(function (c, i) {
-    return React.DOM.option({key: i, value: c.value}, c.text);
-  });
-}
-
-function getInput(type) {
-  type = stripMaybeOrSubtype(type);
-  var kind = getKind(type);
-  var ret = options[kind];
-  if (Func.is(ret)) {
-    return ret;
-  }
-  ret = ret[getName(type)];
-  if (Func.is(ret)) {
-    return ret;
-  }
-  return textbox;
-}
+//
+// default React class methods
+//
 
 function getInitialState() {
   return { hasError: false };
@@ -184,11 +188,22 @@ function getValue(type, rawValue) {
   };
 }
 
-function getOptionalLabel(name, optional) {
-  name = humanize(name);
-  return optional ?
-    React.DOM.span(null, name, React.DOM.small({className: "text-muted"}, optional)) :
-    React.DOM.span(null, name);
+// ========================
+// type -> input conversion
+// ========================
+
+function getInput(type) {
+  type = stripMaybeOrSubtype(type);
+  var kind = getKind(type);
+  var ret = options.inputs[kind];
+  if (Func.is(ret)) {
+    return ret;
+  }
+  ret = ret[getName(type)];
+  if (Func.is(ret)) {
+    return ret;
+  }
+  return textbox;
 }
 
 //
@@ -478,7 +493,7 @@ function checkbox(type, opts) {
 }
 
 //
-// createForm
+// forms
 //
 
 // createForm accepts only structs or subtypes of a struct
@@ -526,7 +541,7 @@ function createForm(type, opts) {
     var Input = o.input ? o.input : getInput(type);
 
     // handle optional fields
-    var optional = getKind(type) === 'maybe' ? ' (optional)' : '';
+    var optional = getKind(type) === 'maybe' ? options.optionalText : '';
 
     // lists, forms, checkboxes and radios must always have a label
     if (Input === createList || Input === createForm || Input === checkbox || Input === radio) {
@@ -612,7 +627,7 @@ function createForm(type, opts) {
 }
 
 //
-// list
+// lists
 //
 
 // createList accepts only lists or subtypes of a lists
@@ -625,8 +640,12 @@ var ListType = subtype(Type, function (type) {
 }, 'ListType');
 
 var ListOpts = struct({
-  value: maybe(Arr),
-  label: Any
+  value:          maybe(Arr),
+  label:          Any,
+  disableAdd:     maybe(Bool),
+  disableRemove:  maybe(Bool),
+  enableOrder:    maybe(Bool),
+  item:           maybe(Obj)
 }, 'ListOpts');
 
 function createList(type, opts) {
@@ -721,30 +740,35 @@ function createList(type, opts) {
 
       var children = [];
       for ( var i = 0, len = this.state.value.length ; i < len ; i++ ) {
-        var o = {value: this.state.value[i]};
+        // copy opts to preserve the original
+        var o = mixin({value: this.state.value[i]}, opts.item);
         children.push(
-          React.DOM.div({className: "row"}, 
+          React.DOM.div({className: "row", key: i}, 
             React.DOM.div({className: "col-md-7"}, 
-              Input(ItemType, o)({key: i, ref: i})
+              Input(ItemType, o)({ref: i})
             ), 
             React.DOM.div({className: "col-md-5"}, 
               React.DOM.div({className: "btn-group"}, 
-                React.DOM.button({className: "btn btn-default", onClick: this.remove.bind(this, i)}, "Remove"), 
-                React.DOM.button({className: "btn btn-default", onClick: this.moveUp.bind(this, i)}, "Up"), 
-                React.DOM.button({className: "btn btn-default", onClick: this.moveDown.bind(this, i)}, "Down")
+                opts.disableRemove ? null : React.DOM.button({className: "btn btn-default btn-remove", onClick: this.remove.bind(this, i)}, "Remove"), 
+                opts.enableOrder ? React.DOM.button({className: "btn btn-default btn-move-up", onClick: this.moveUp.bind(this, i)}, "Up") : null, 
+                opts.enableOrder ? React.DOM.button({className: "btn btn-default btn-move-down", onClick: this.moveDown.bind(this, i)}, "Down") : null
               )
             )
           )
         );
       }
 
+      var btnAdd = opts.disableAdd ? null : (
+        React.DOM.div({className: "form-group"}, 
+          React.DOM.button({className: "btn btn-default btn-add", onClick: this.add}, "Add")
+        )
+      );
+
       return (
         React.DOM.div({className: cx(classes)}, 
           label, 
           children, 
-          React.DOM.div({className: "form-group"}, 
-            React.DOM.button({className: "btn btn-default", onClick: this.add}, "Add")
-          )
+          btnAdd
         )
       );
     }
@@ -753,14 +777,25 @@ function createList(type, opts) {
 
 }
 
+// ===============================
+// options: here you can customize
+// ===============================
+
 var options = {
-  irriducible: {
-    Bool: checkbox
-  },
-  enums: select,
-  struct: createForm,
-  list: createList
+  optionalText: ' (optional)',
+  inputs: {
+    irriducible: {
+      Bool: checkbox
+    },
+    enums: select,
+    struct: createForm,
+    list: createList
+  }
 };
+
+//
+// exports
+//
 
 t.form = {
   options: options,
@@ -23407,8 +23442,8 @@ $(function () {
   var scripts = [
     {id: 'showcase', label: 'Showcase'},
     {id: 'requiredFields', label: '1. Required fields'},
-    {id: 'labels', label: '2. Auto generated labels'},
-    {id: 'optionalFields', label: '3. Optional fields'},
+    {id: 'optionalFields', label: '2. Optional fields'},
+    {id: 'labels', label: '3. Auto generated labels'},
     {id: 'subtypes', label: '4. Subtypes'},
     {id: 'customize', label: '5. Booleans and fields customization'},
     {id: 'enumsSelect', label: '6. Enums: render as select (default)'},
@@ -23442,12 +23477,8 @@ $(function () {
   var POSTFIX =     $('#postfix').html();
 
   function evalCode(code) {
-    try {
-      var js = code + POSTFIX;
-      return eval(js);
-    } catch (e) {
-      return e;
-    }
+    var js = code + POSTFIX;
+    return eval(js);
   }
 
   function escapeHtml(html) {
@@ -23459,13 +23490,17 @@ $(function () {
        .replace(/'/g, "&#039;");
   }
 
-  function renderComponent(component) {
-    React.renderComponent(component(), $preview.get(0));
-    $formValues.hide();
+  function renderHtml() {
     var html = $('#preview div div').html();
     html = html.replace(/data-reactid="(.[^"]*)"/gm, '');
     $html.html(escapeHtml(beautifyHtml(html)));
     hljs.highlightBlock($html.get(0));
+  }
+
+  function renderComponent(component) {
+    React.renderComponent(component(), $preview.get(0));
+    $formValues.hide();
+    renderHtml();
   }
 
   function renderFormValues(value) {
@@ -23506,6 +23541,8 @@ $(function () {
     cm.setValue(examples[id]);
     run();
   });
+
+  $preview.click(renderHtml);
 
   run();
 
