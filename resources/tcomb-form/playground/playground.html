@@ -71,75 +71,30 @@ React.createClass({
   }
 });
 </script>
-<script type="text/example" id="lists">var Tags = list(Str);
+<script type="text/example" id="showcase">// play with the form to the right
+// you can add, remove and sort colors
+// and then start the tutorial from `1. Required fields`
 
-var Form = createList(Tags);
-</script>
-<script type="text/example" id="listOfStructs">var Person = struct({
-  name: Str,
-  surname: Str
-});
-
-var Persons = list(Person);
-
-var Form = createList(Persons);
-</script>
-<script type="text/example" id="nestedLists">var Person = struct({
-  name: Str,
-  surname: Str
-});
-
-var Family = struct({
-  address: Str,
-  mother: Person,
-  father: Person,
-  children: list(Person)
-});
-
-var Form = createForm(Family, {
-  value: {
-    "address": "2082 Alexander Avenue Oakland, CA 94612",
-    "mother": {
-      "name": "Brandy",
-      "surname": "Hargrove"
-    },
-    "father": {
-      "name": "Darrell",
-      "surname": "R. Silva"
-    },
-    "children": [
-      {
-        "name": "Scott",
-        "surname": "Silva"
-      },
-      {
-        "name": "Valerie",
-        "surname": "Hargrove"
-      }
-    ]
-  }
-});
-</script>
-<script type="text/example" id="showcase">var Palette = struct({
+var Palette = struct({
   name: Str,
   draft: Bool,
   colors: list(Str)
 });
 
 var Form = createForm(Palette, {
+  value: { colors: ['#d53f54', '#5b79e4'] },
   fields: {
-    colors: { 
-      enableOrder: true,
-      item: {type: 'color'} 
-    }
+    colors: { item: {type: 'color'} }
   }
 });
 </script>
 <script type="text/example" id="requiredFields">var Person = struct({
-  name: Str,        // required string
-  surname: Str      // required string
+  name: Str,    // required string
+  surname: Str  // required string
 });
 
+// the form is mounted by React.js to the right
+// placeholders are auto generated
 var Form = createForm(Person);
 </script>
 <script type="text/example" id="labels">var Person = struct({
@@ -204,12 +159,13 @@ var Form = createForm(User, {
     },
     password: {
       // you can override the type (HTML5 types supported)
+      // try to change it to see the available types
       type: 'password'
     }
   }
 });
 </script>
-<script type="text/example" id="enumsSelect">var Country = t.enums({ IT: 'Italy', US: 'United States' });
+<script type="text/example" id="enumsSelect">var Country = enums({ IT: 'Italy', US: 'United States' });
 
 var Person = struct({
   name: Str,
@@ -226,7 +182,7 @@ var Form = createForm(Person, {
   }
 });
 </script>
-<script type="text/example" id="enumsRadio">var Country = t.enums({ IT: 'Italy', US: 'United States' });
+<script type="text/example" id="enumsRadio">var Country = enums({ IT: 'Italy', US: 'United States' });
 
 var Person = struct({
   name: Str,
@@ -237,7 +193,7 @@ var Form = createForm(Person, {
   fields: {
     country: { 
       // you can override the input used to display
-      input: t.form.radio
+      input: radio
     }
   }
 });
@@ -251,7 +207,7 @@ var Form = createForm(Person, {
   fields: {
     age: {
       i17n: {
-        // this is used from the model to UI
+        // this is used from the model to the UI
         format: function (value) {
           return value;
         },
@@ -264,29 +220,16 @@ var Form = createForm(Person, {
   }
 });
 </script>
-<script type="text/example" id="textarea">var Post = struct({
-  username: Str,
-  text: Str
+<script type="text/example" id="defaultValues">var Person = struct({
+  name: Str,
+  surname: Str
 });
 
-var Form = createForm(Post, {
-  fields: {
-    text: { type: 'textarea' }
-  }
-});
-</script>
-<script type="text/example" id="defaultValues">var Post = struct({
-  username: Str,
-  text: Str
-});
-
-var Form = createForm(Post, {
+var Form = createForm(Person, {
+  // you can set a default value for every field
   value: {
-    username: 'giulio',
-    text: 'Lorem ipsum'
-  },
-  fields: {
-    text: { type: 'textarea' }
+    name: 'Giulio',
+    surname: 'Canti'
   }
 });
 </script>
@@ -306,6 +249,55 @@ var Form = createForm(Subscription, {
   fields: {
     send: {label: 'Send me email notifications'},
     email: {help: 'Required if you select `Send me email notifications`'}
+  }
+});
+</script>
+<script type="text/example" id="lists">var Tags = list(Str);
+
+var Form = createList(Tags);
+</script>
+<script type="text/example" id="listOfStructs">var Person = struct({
+  name: Str,
+  surname: Str
+});
+
+var Persons = list(Person);
+
+var Form = createList(Persons);
+</script>
+<script type="text/example" id="nestedLists">var Person = struct({
+  name: Str,
+  surname: Str
+});
+
+var Family = struct({
+  address: Str,
+  mother: Person,
+  father: Person,
+  children: list(Person)
+});
+
+var Form = createForm(Family, {
+  value: {
+    "address": "2082 Alexander Avenue Oakland, CA 94612",
+    "mother": {
+      "name": "Brandy",
+      "surname": "Hargrove"
+    },
+    "father": {
+      "name": "Darrell",
+      "surname": "R. Silva"
+    },
+    "children": [
+      {
+        "name": "Scott",
+        "surname": "Silva"
+      },
+      {
+        "name": "Valerie",
+        "surname": "Hargrove"
+      }
+    ]
   }
 });
 </script>

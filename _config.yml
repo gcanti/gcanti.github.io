@@ -16,9 +16,15 @@ blog: "<a href='/'>blog</a>"
 projects_list:
  - tcomb
  - tcomb-validation
+ - tcomb-form
  - tcomb-react
  - tcomb-react-bootstrap
 projects:
+ tcomb-form:
+  name: tcomb-form
+  link: https://github.com/gcanti/tcomb-form
+  markdown: "[tcomb](https://github.com/gcanti/tcomb-form)"
+  description: "<b>Domain Driven Forms</b>. Automatically generate form markup from a domain model. It seems like magic. Check out the <a href='/resources/tcomb-form/playground/playground.html'>Playground</a>."
  tcomb:
   name: tcomb
   link: https://github.com/gcanti/tcomb
