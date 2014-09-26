@@ -5,6 +5,8 @@ title: Six reasons to define constructors with only one argument
 
 ## Introduction
 
+After all the comments here and on [Reddit](http://www.reddit.com/r/javascript/comments/2hezdw/six_reasons_to_define_constructors_with_only_one/) (thanks to all), I've updated this article to better explain my POV.
+
 This is how to define a "class" in vanilla JavaScript (further referred to as `vanilla`):
 
 ```js
@@ -29,13 +31,18 @@ var person = new Person({name: 'Giulio', surname: 'Canti'});
 person.name; // => 'Giulio'
 ```
 
-**I'll list the reasons why I think the latter is a better choice**.
+I'll list the reasons why I think the latter is a better choice **when extreme performance is not required**.
 
 ## 1. Easy maintenance and optional `new`
 
-With `vanilla` there are 3 points of maintenance if you add an argument:
+With `vanilla` there are 4 points of maintenance if you add an argument:
 
 ```js
+/**
+ ...
+ * @param {String} email // change
+ ...
+ */
 function VanillaPerson(name, surname, email) { // change
 
   // make `new` optional
@@ -53,10 +60,10 @@ With `1-arity` there is a single point of maintenance if you add an argument:
 
 
 ```js
-function Person(obj) { // no change
+function Person(obj) {
 
   if (!(this instanceof Person)) {
-    return new Person(obj); // no change
+    return new Person(obj);
   }
 
   this.name = obj.name;
@@ -64,6 +71,11 @@ function Person(obj) { // no change
   this.email = obj.email; // change
 }
 ```
+
+Many people consider the optional `new` an anti-pattern. I don't, but I'm fine with that.
+Personally I use `new` when I'm instantiating a class because it makes clear the intent, but
+I'll continue to write `$('.myclass').show()` instead of `new $('.myclass').show()` despite the anti-pattern thing.
+
 
 ## 2. Named parameters
 
@@ -129,8 +141,10 @@ Since in `1-arity` arguments and instances have the same shape, you get
 deserialization for free. 
 
 ```js
-var person = Person(json);
+var person = new Person(json);
 ```
+
+For a deeper discussion about deserialization see [JSON Deserialization Into An Object Model](http://gcanti.github.io/2014/09/12/json-deserialization-into-an-object-model.html).
 
 ## 5. Idempotency
 
@@ -148,8 +162,8 @@ function Person(obj) {
   ...
 }
 
-var person = Person({name: 'Giulio', surname: 'Canti'});
-Person(person) === person; // => true
+var person = new Person({name: 'Giulio', surname: 'Canti'});
+new Person(person) === person; // => true
 ```
 
 ## 6. Avoid boilerplate
@@ -165,25 +179,37 @@ function struct(props) {
     // make Struct idempotent
     if (obj instanceof Struct) return obj;
 
-    // make `new` optional
-    if (!(this instanceof Struct)) return new Struct(obj);
+    // make `new` optional, decomment if you agree
+    // if (!(this instanceof Struct)) return new Struct(obj);
 
     // add props
-    var name;
-    for ( var i = 0, len = props.length ; i < len ; i++ ) {
-      name = props[i];
-      // here you could implement type checking..
-      this[name] = obj[name];
+    for (var name in props) {
+      if (props.hasOwnProperty(name)) {
+        // here you could implement type checking exploiting props[name]
+        this[name] = obj[name];
+      }
     }
 
+    // make the instance immutable, decomment if you agree
+    // Object.freeze(this);
+
   }
+
+  // keep a reference to meta infos for further processing, 
+  // documentation tools and IDEs support
+  Struct.meta = {
+    props: props
+  };
 
   return Struct;
 
 }
 
-// one liner, defines a 1-arity Person class
-var Person = struct(['name', 'surname']);
+// defines a 1-arity Person class
+var Person = struct({
+  name: String,
+  surname: String
+});
 
 var person = new Person({surname: 'Canti', name: 'Giulio'});
 ```
