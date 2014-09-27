@@ -23759,7 +23759,9 @@ $(function () {
     {id: 'global', label: '10. How to set constraints on the whole form'},
     {id: 'lists', label: '11. Lists'},
     {id: 'listOfStructs', label: '12. Lists of structs'},
-    {id: 'nestedLists', label: '13. Nested lists'}
+    {id: 'nestedLists', label: '13. Nested lists'},
+    {id: 'goodies', label: '14. Bootstrap goodies'},
+    {id: 'horizontal', label: '15. Horizontal forms'}
   ];
 
   var examples = {};
@@ -23780,11 +23782,6 @@ $(function () {
   var $formValues = $('#formValues');
   var $examples =   $('#examples select');
   var POSTFIX =     $('#postfix').html();
-
-  function evalCode(code) {
-    var js = code + POSTFIX;
-    return eval(js);
-  }
 
   function escapeHtml(html) {
     return html
@@ -23825,10 +23822,12 @@ $(function () {
     $formValues.show().html(html);
   }
 
-  function run() {
+  function run(id) {
     var code = cm.getValue();
     try {
-      var factory = evalCode(code);
+      var className = id === 'horizontal' ? '"form-horizontal"' : 'null';
+      var js = code + POSTFIX.replace(/:className/, className);
+      var factory = eval(js);
       renderFactory(factory);
     } catch (err) {
       renderError(err);
@@ -23847,10 +23846,10 @@ $(function () {
   $examples.on('change', function () {
     var id = $(this).val();
     cm.setValue(examples[id]);
-    run();
+    run(id);
   });
 
-  run();
+  run(defaultExample);
 
 });
 },{"../index":"/Users/giulio/Documents/Projects/github/tcomb-form/index.js","js-beautify":"/Users/giulio/Documents/Projects/github/tcomb-form/node_modules/js-beautify/js/index.js","react":"/Users/giulio/Documents/Projects/github/tcomb-form/node_modules/react/react.js"}],"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
