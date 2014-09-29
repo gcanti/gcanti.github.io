@@ -146,7 +146,7 @@ Enums are a particular case of subtypes, where `B = Str` and `isA` is implemente
 // the enums combinator
 
 function enums(map) {
-  return subtype(Str, function (s) {
+  return Enums(Str, function (s) {
     return map.hasOwnProperty(s);
   });
 }
@@ -229,7 +229,7 @@ Let's define the `tuple` and `struct` combinators
 "use strict";
 
 function tuple(types) {
-  return function (arr) {    
+  return function Tuple(arr) {    
     // check type
     if ( !Array.isArray(arr) ) throw new TypeError();
     types.forEach(function (type, i) {
@@ -259,7 +259,7 @@ function isObject(x) {
 }
 
 function struct(props) {
-  return function (obj) {
+  return function Struct(obj) {
     if ( !isObject(obj) ) throw new TypeError();
     for (var name in props) {
       if (props.hasOwnProperty(name)) {
@@ -300,7 +300,7 @@ So far we have defined four combinators:
 - tuple
 - struct
 
-Let's compose them: I'll define the type `Climber` of all the italian males that have a favorable BMI (body mass index) to climb.
+Let's compose all of them to prove the powers of sets: I'll define the type `Climber` of all the italian males that have a favorable BMI (body mass index) to climb.
 
 ```js
 // helper types and functions
