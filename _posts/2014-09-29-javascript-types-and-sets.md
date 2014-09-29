@@ -3,6 +3,10 @@ layout: post
 title: JavaScript, Types and Sets - Part I (draft)
 ---
 
+## Disclaimer
+
+This article is a draft and I still have to finish it, if you find some error, typo or something not clear, please shoot me an email or a message on Twitter, I appreciate.
+
 ## Abstract
 
 In this article I'll illustrate **how a mathematician could regard the JavaScript language and its type system**. 
