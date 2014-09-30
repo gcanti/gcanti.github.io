@@ -234,10 +234,10 @@ Let's define the `tuple` and `struct` combinators
 
 function tuple(types) {
   return function Tuple(arr) {    
-    // check type
+    // check input structure
     if ( !Array.isArray(arr) ) throw new TypeError();
     types.forEach(function (type, i) {
-      type(arr[i]); // check i-th coordinate type
+      arr[i] = type(arr[i]); // check i-th coordinate and dehydrate nested structures
     });
     // makes the tuple immutable
     return Object.freeze(arr);
@@ -264,10 +264,14 @@ function isObject(x) {
 
 function struct(props) {
   return function Struct(obj) {
+    // makes Struct idempotent
+    if ( obj instanceof Struct ) return obj;
+    // check input structure
     if ( !isObject(obj) ) throw new TypeError();
     for (var name in props) {
       if (props.hasOwnProperty(name)) {
-        props[name](obj[name]);
+        var type = props[name]
+        obj[name] = type(obj[name]); // check prop type and dehydrate nested structures
       }
     }
     return Object.freeze(obj);
