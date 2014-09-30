@@ -91,8 +91,8 @@ var phonebook = Phonebook({
 The union of two sets A and B is the collection of points which are in A or in B or in both A and B.
 
 Union is the trickiest type to implement since, given an input, generally it's not determined which of the types involved
-must be used to handle it, even more if the sets involved are not disjoint, that is they have elements in common.
-A solution would be to provide a `dispatch: Any -> Types U Nil` function that accepts the same input and returns the suitable type
+must be used to handle it, even more if the sets are not disjoint, that is they have elements in common.
+A solution could be to provide a `dispatch: Any -> Types U Nil` function that accepts the same input and returns the suitable type
 (or undefined if it's not possible to establish the type).
 
 ```js
@@ -148,7 +148,7 @@ var Employer = struct({
 
 // helps JSON deserialization
 Employer.prototype.toJSON = function () {
-  return mixin({tag: 'Employer'}, this);
+  return mixin({tag: 'employer'}, this);
 };
 
 var Employee = struct({
@@ -158,24 +158,24 @@ var Employee = struct({
 
 // helps JSON deserialization
 Employer.prototype.toJSON = function () {
-  return mixin({tag: 'Employee'}, this);
+  return mixin({tag: 'employee'}, this);
 };
 
 var Person = union([Employer, Employee]);
 
 Person.dispatch = function (x) {
-  if (x.tag === 'Employer') return Employer;
-  if (x.tag === 'Employee') return Employee;
+  if (x.tag === 'employer') return Employer;
+  if (x.tag === 'employee') return Employee;
 };
 
 new Person({
-  tag: 'Employer', 
+  tag: 'employer', 
   name: 'Mark', 
   surname: 'Zuckerberg'
 }); // => new Employer({name: 'Mark', surname: 'Zuckerberg'});
 
 new Person({
-  tag: 'Employee', 
+  tag: 'employee', 
   name: 'Giulio', 
   surname: 'Canti'
 }); // => new Employee({name: 'Giulio', surname: 'Canti'});
@@ -203,3 +203,19 @@ OptionalStr(null);      // => null
 OptionalStr(undefined); // => undefined
 OptionalStr('hello');   // => 'hello'
 ```
+
+## Set theory is interesting but...
+
+...if you want to see **these concepts in action**, here a few projects of mine:
+
+- [tcomb](https://github.com/gcanti) - **t**ype **comb**inators. Pragmatic runtime type checking for JavaScript
+- [tcomb-validation](https://gcanti.github.io/resources/tcomb-validation/playground/playground.html) - A general purpose JavaScript validation library based on type combinators 
+- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - ( **this is cool** :) Domain Driven Forms. Automatically generate form markup from a domain model 
+
+## Conclusion
+
+*If you are reading this you're making me the greatest gift* since speaking of math makes me always happy. 
+I hope you enjoyed this ride between sets and functions, thanks for reading.
+
+Giulio
+

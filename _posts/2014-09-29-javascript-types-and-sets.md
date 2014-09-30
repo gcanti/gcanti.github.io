@@ -1,11 +1,7 @@
 ---
 layout: post
-title: JavaScript, Types and Sets - Part I (draft)
+title: JavaScript, Types and Sets - Part I
 ---
-
-## Disclaimer
-
-This article is a draft and I still have to finish it, if you find some error, typo or something not clear, please shoot me an email or a message on Twitter, I appreciate.
 
 ## Abstract
 
@@ -19,8 +15,7 @@ Mathematicians for a long, long time and with terrific achievements used two fun
 
 A *set* is a well defined collection of distinct objects. The objects that make up a set (also known as the *elements* or *members*) can be anything: numbers, people, letters of the alphabet, other sets, and so on.
 
-I'll show you how **JavaScript types can be viewed as sets**. Let's start defining four primitive sets that we will need later. To represent the concept
-of a set in JavaScript I'll use a function that behave like the identity if everything is fine and throws a `TypeError` otherwise.
+I'll show you how **JavaScript types can be viewed as sets**. Let's start defining four primitive sets that we will need later. To represent the concept of a set in JavaScript I'll use a function that behave like the identity if everything is fine and throws a `TypeError` otherwise. From a math point of view ensuring the correct values and failing loudly is essential.
 
 ```js
 // Nil is the set containing null and undefined
@@ -52,11 +47,11 @@ var Bool = function (x) {
 };
 ```
 
-> **Note**: In mathematics the elements of sets are **immutables**. As for JavaScript primitives, we are lucky since they are immutables out of the box.
+> **Note**: In mathematics the elements of sets are **immutables**. For what concerns JavaScript primitives we are lucky since they are immutables out of the box.
 
 ## Functions
 
-We could think at JavaScript functions like black boxes that accepts an "input" and spit out an "output"
+We could think at JavaScript functions like black boxes that accept an "input" and spit out an "output"
 
 ```js
 function len(str) {
@@ -64,7 +59,7 @@ function len(str) {
 }
 ```
 
-Can we define what is an input and an output with our new tool, the sets?
+Can we define what is an input and an output with our new tool?
 Yes! In mathematics a function `f` is a relation between a set A of inputs (also called *domain*) and a set B of permissible outputs (also called *codomain*) with the property that each input `a` is related to exactly one output `b = f(a)`. We denote this by `f: A -> B`
 
 > **Note**. In mathematics **doesn't make sense** to apply a function `f` to an element that do not belong to its domain. I'll implement this fact in JavaScript throwing a `TypeError`.
@@ -84,7 +79,7 @@ function len(str) {
 
 > **Advice**. When you define a function, try to figure out what is the domain and the codomain. If you find it difficult, it could be a code smell.
 
-Take your time to absorb these two paragraphs, read them a second time if needed, because with these basic tools I'm going to define an entire type system only combining sets! (as well as one could compose JavaScript functions).
+Take your time to absorb these two paragraphs, read them a second time if needed, because with these basic tools I'm going to define an entire type system only combining sets! (like you can compose JavaScript functions).
 
 From now on, I'll consider the words "set" and "type" interchangeables.
 
@@ -125,9 +120,9 @@ Positive(-1);   // throws TypeError
 Positive(2.5);  // => 2.5
 ```
 
-The `subtype` function is the first of a series of functions that I'll define, accepting a bunch of already defined types in input (and sometimes other values) and return a new type in output. I call this kind of functions **type combinators**.
+The `subtype` function is the first of a series of functions accepting a bunch of already defined types in input (and sometimes other values) and return a new type in output. I call this kind of functions **type combinators**.
 
-The `subtype` combinator (and all the combinators that I'll define later) can be applied, mixed and composed multiple times. Let's see an example
+The `subtype` combinator, like the other combinators, can be applied, mixed and composed multiple times. Let's see an example
 
 ```js
 var PositiveInteger = subtype(Positive, function (b) {
@@ -168,10 +163,10 @@ CSSTextAlign('up');   // => throws TypeError
 CSSTextAlign('left'); // => 'left'
 ```
 
-Have you noticed the strange choice of the argument name `map`? And the alike strange choice of the variable name `f`?
+Have you noticed the choice of the names: `map` and `f`?
 "map" is a synonym of "function" and "f" is the conventional short name of a function... what's going on?
 Well, it turns out that hashes are another way of defining a function, where you list for all the
-elements of the domain the related value of the codomain:
+elements of the domain (always `Str`) the related value of the codomain:
 
 ```
 // this is what would write a mathematician
@@ -197,7 +192,7 @@ f["right"] = true;
 f["justify"] = true;
 ```
 
-I am both so when I look at an hash, what I **see** is a function. And from now on
+When I look at an hash, what I **see** is a function. And from now on
 maybe you too.
 
 ## Tuples and Structs
@@ -234,7 +229,7 @@ var f = {
 };
 ```
 
-> **Note**. Another example of a tuple is the `arguments` object of a function. Because of what said above is theoretically the same having `n` different arguments as a tuple or only [one argument](https://gcanti.github.io/2014/09/25/six-reasons-to-define-constructors-with-only-one-argument.html) as a struct (or even mix the two). 
+> **Note**. Another example of a tuple is the `arguments` object of a function. As showed above it's the same having `n` different arguments as a tuple or only [one argument](https://gcanti.github.io/2014/09/25/six-reasons-to-define-constructors-with-only-one-argument.html) as a struct (or even mix the two). 
 
 Let's define the `tuple` and `struct` combinators
 
@@ -367,10 +362,10 @@ I hope you enjoyed this ride between sets and functions, thanks for reading.
 
 Giulio
 
-## Theory is interesting but...
+## Set theory is interesting but...
 
-...if you want to see **these concepts in action**, here a few projects of mine:
+If you want to see **these concepts in action**, here a few projects of mine:
 
-- [tcomb](https://github.com/gcanti) - **t**ype **comb**inators. Pragmatic runtime type checking for JavaScript
+- [tcomb](https://github.com/gcanti) - Pragmatic runtime type checking for JavaScript based on type combinators
 - [tcomb-validation](https://gcanti.github.io/resources/tcomb-validation/playground/playground.html) - A general purpose JavaScript validation library based on type combinators 
-- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - ( **this is cool** :) Domain Driven Forms. Automatically generate form markup from a domain model 
+- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - ( **this is cool** ) Domain Driven Forms. Automatically generate form markup from a domain model 
