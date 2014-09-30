@@ -221,7 +221,18 @@ Tuples and structs are two ways to express the **same math concept**: a Cartesia
 A new set can be constructed by associating every element of one set with every element of another set. 
 The *Cartesian product* of two sets A and B, denoted by `A × B` is the set of all ordered pairs `(a, b)` such that `a` is a member of A and `b` is a member of B. 
 
-The two objects in the code snippet above can be thought belonging to the same set `Str × Num × Bool`. The only difference is that tuples are accesed by index, structs by name.
+The two objects in the code snippet above can be thought (*) belonging to the same set `Str × Num × Bool`. The only difference is that tuples are accesed by index, structs by name.
+
+(*) It's easy to define a bijective function `f` that maps the set of the props names to the set {0, 1, 2} of the tuple indexes:
+
+```js
+// remember that hashes can be viewed as functions
+var f = {
+  name: 0,
+  surname: 1,
+  isSingle: 2
+};
+```
 
 > **Note**. Another example of a tuple is the `arguments` object of a function. Because of what said above is theoretically the same having `n` different arguments as a tuple or only [one argument](https://gcanti.github.io/2014/09/25/six-reasons-to-define-constructors-with-only-one-argument.html) as a struct (or even mix the two). 
 
