@@ -31,3 +31,7 @@ code {
   padding: 20px 0;
   margin: 40px 0;
 }
+blockquote {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}

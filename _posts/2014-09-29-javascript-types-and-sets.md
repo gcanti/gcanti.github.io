@@ -7,9 +7,9 @@ title: JavaScript, Types and Sets - Part I
 
 In this article I'll illustrate **how a mathematician could regard the JavaScript language and its type system**. 
 I'll talk about sets, functions and immutability, building a coherent framework of concepts. 
-This framework helps me to reason about systems while I'm coding. Hope it can help you too.
+This framework helps me to reason about the system while I'm coding. Hope it can help you too.
 
-Mathematicians for a long, long time and with terrific achievements used two fundamental building blocks: sets and functions.
+Mathematicians for a long, long time and with terrific success use two fundamental building blocks: sets and functions.
 
 ## Sets
 
@@ -18,36 +18,37 @@ A *set* is a well defined collection of distinct objects. The objects that make 
 I'll show you how **JavaScript types can be viewed as sets**. Let's start defining four primitive sets that we will need later. To represent the concept of a set in JavaScript I'll use a function that behave like the identity if everything is fine and throws a `TypeError` otherwise. From a math point of view ensuring the correct values and failing loudly is essential.
 
 ```js
-// Nil is the set containing null and undefined
+// helper
+function assert(guard) {
+  if (guard !== true) throw new TypeError();
+}
 
+// Nil is the set containing null and undefined
 var Nil = function (x) {
-  if (x !== null && x !== undefined) throw new TypeError();
+  assert(x === null || x === undefined);
   return x;
 };
 
 // Str is the set of all strings
-
 var Str = function (x) {
-  if (typeof x !== 'string') throw new TypeError();
+  assert(typeof x === 'string');
   return x;
 };
 
 // Num is the set of all numbers
-
 var Num = function (x) {
-  if (typeof x !== 'number' || !isFinite(x) || isNaN(x)) throw new TypeError();
+  assert(typeof x === 'number' && isFinite(x) && !isNaN(x));
   return x;
 };
 
 // Bool is the set containing true and false
-
 var Bool = function (x) {
-  if (x !== true && x !== false) throw new TypeError();
+  assert(x === true || x === false);
   return x;
 };
 ```
 
-> **Note**: In mathematics the elements of sets are **immutables**. For what concerns JavaScript primitives we are lucky since they are immutables out of the box.
+> **Note**: In math the elements of a set are **immutables**. For what concerns JavaScript primitives we are lucky since they are immutables out of the box.
 
 ## Functions
 
@@ -59,10 +60,10 @@ function len(str) {
 }
 ```
 
-Can we define what is an input and an output with our new tool?
-Yes! In mathematics a function `f` is a relation between a set A of inputs (also called *domain*) and a set B of permissible outputs (also called *codomain*) with the property that each input `a` is related to exactly one output `b = f(a)`. We denote this by `f: A -> B`
+Can we define what is an input and an output with our new tool, the sets?
+Yes! In math a function `f` is a relation between a set A of inputs (also called *domain*) and a set B of permissible outputs (also called *codomain*) with the property that each input `a` is related to exactly one output `b = f(a)`. We denote this by `f: A -> B`
 
-> **Note**. In mathematics **doesn't make sense** to apply a function `f` to an element that do not belong to its domain. I'll implement this fact in JavaScript throwing a `TypeError`.
+> **Note**. In math **doesn't make sense** to apply a function `f` to an element that do not belong to its domain. I'll implement this fact in JavaScript throwing a `TypeError`.
 
 It turns out that when you write the JsDocs, you are actually stating what is the domain and the codomain of your function
 
@@ -85,7 +86,7 @@ From now on, I'll consider the words "set" and "type" interchangeables.
 
 ## Subtypes and type combinators
 
-In mathematics a set A is a *subset* of a set B if A is "contained" inside B, that is, all elements of A are also elements of B. But how to express the word "contained" with our new tools? The trick is to define a function `isA: B -> Bool` (also called *characteristic function*)
+In math a set A is a *subset* of a set B if A is "contained" inside B, that is, all elements of A are also elements of B. But how to express the word "contained" with our new tools? The trick is to define a function `isA: B -> Bool` (also called *characteristic function*)
 that tells us if an element `b` of B can be considered member of A, that is if `isA(b) === true` holds. Say you want to define the subset `Positive` of all the numbers `Num` that are greater than zero
 
 ```js
@@ -104,7 +105,7 @@ Now I need to define an helper function called `subtype` that accepts a type and
 function subtype(B, isA) {
   return function Subtype(b) {
     b = B(b); // ensures that b belongs to B
-    if ( !isA(b) ) throw new TypeError();
+    assert(isA(b));
     return b;
   };
 }
@@ -166,7 +167,7 @@ CSSTextAlign('left'); // => 'left'
 Have you noticed the choice of the names: `map` and `f`?
 "map" is a synonym of "function" and "f" is the conventional short name of a function... what's going on?
 Well, it turns out that hashes are another way of defining a function, where you list for all the
-elements of the domain (always `Str`) the related value of the codomain:
+elements of the domain (always a subset of `Str`) the related value of the codomain:
 
 ```
 // this is what would write a mathematician
@@ -192,8 +193,7 @@ f["right"] = true;
 f["justify"] = true;
 ```
 
-When I look at an hash, what I **see** is a function. And from now on
-maybe you too.
+When I look at an hash, what I **see** is a function. And from now on maybe you too.
 
 ## Tuples and Structs
 
@@ -211,25 +211,22 @@ maybe you too.
 }
 ```
 
-Tuples and structs are two ways to express the **same math concept**: a Cartesian product of sets.
-
-A new set can be constructed by associating every element of one set with every element of another set. 
-The *Cartesian product* of two sets A and B, denoted by `A × B` is the set of all ordered pairs `(a, b)` such that `a` is a member of A and `b` is a member of B. 
+Tuples and structs are two ways to express the **same math concept**: the *Cartesian product* of two sets A and B, denoted by `A × B` is the set of all ordered pairs `(a, b)` such that `a` is a member of A and `b` is a member of B. 
 
 The two objects in the code snippet above can be thought (*) belonging to the same set `Str × Num × Bool`. The only difference is that tuples are accesed by index, structs by name.
 
-(*) It's easy to define a bijective function `f` that maps the set of the props names to the set {0, 1, 2} of the tuple indexes:
+(*) It's easy to define a bijective function `order` that maps the set of the struct props names to the set {0, 1, 2} of the tuple indexes:
 
 ```js
 // remember that hashes can be viewed as functions
-var f = {
+var order = {
   name: 0,
   surname: 1,
   isSingle: 2
 };
 ```
 
-> **Note**. Another example of a tuple is the `arguments` object of a function. As showed above it's the same having `n` different arguments as a tuple or only [one argument](https://gcanti.github.io/2014/09/25/six-reasons-to-define-constructors-with-only-one-argument.html) as a struct (or even mix the two). 
+> **Note**. Another example of a tuple is the `arguments` object of a function. As discussed above it's the same having `n` different arguments as a tuple or only [one argument](https://gcanti.github.io/2014/09/25/six-reasons-to-define-constructors-with-only-one-argument.html) as a struct (or even mix the two). 
 
 Let's define the `tuple` and `struct` combinators
 
@@ -241,7 +238,7 @@ Let's define the `tuple` and `struct` combinators
 function tuple(types) {
   return function Tuple(arr) {    
     // check input structure
-    if ( !Array.isArray(arr) ) throw new TypeError();
+    assert(Array.isArray(arr));
     types.forEach(function (type, i) {
       arr[i] = type(arr[i]); // check i-th coordinate and dehydrate nested structures
     });
@@ -273,7 +270,7 @@ function struct(props) {
     // makes Struct idempotent
     if ( obj instanceof Struct ) return obj;
     // check input structure
-    if ( !isObject(obj) ) throw new TypeError();
+    assert(isObject(obj));
     for (var name in props) {
       if (props.hasOwnProperty(name)) {
         var type = props[name]
@@ -285,8 +282,8 @@ function struct(props) {
 }
 
 var Person = struct({
-  name:     Str,
-  age:      Num,
+  name: Str,
+  age: Num,
   isSingle: Bool
 });
 
@@ -305,7 +302,7 @@ Person({
 
 > **Advice**. Remember to add `"use strict";` to your source files. From [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) "Nothing can be added to or removed from the properties set of a frozen object. Any attempt to do so will fail, either silently or by throwing a TypeError exception (most commonly, but not exclusively, when in strict mode)."
 
-## Fireworks!
+## Set power!
 
 So far we have defined four combinators:
 
@@ -314,7 +311,7 @@ So far we have defined four combinators:
 - tuple
 - struct
 
-Let's compose all of them to prove the powers of sets: I'll define the type `Climber` of all the italian males that have a favorable BMI (body mass index) to climb.
+Let's compose all of them to prove the power of sets: I'll define the type `Climber` of all the italian males that have a favorable BMI (body mass index) to climb.
 
 ```js
 // helper types and functions
@@ -357,7 +354,7 @@ Climber(giulio); // => giulio (yay)
 
 In the next part I'll talk about lists, unions, optional values and dictionaries.
 
-*If you are reading this you're making me the greatest gift* since speaking of math makes me always happy. 
+If you are reading this it's like you gave me a gift since speaking of math makes me always happy. 
 I hope you enjoyed this ride between sets and functions, thanks for reading.
 
 Giulio
