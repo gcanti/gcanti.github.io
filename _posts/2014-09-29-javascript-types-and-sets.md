@@ -207,7 +207,7 @@ When I look at an hash, what I **see** is a function. And from now on maybe you 
 {
   name: 'Giulio',
   age: 40,
-  isSingle: true // and this is spam :)
+  isSingle: true
 }
 ```
 
