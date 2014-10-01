@@ -7,9 +7,9 @@ title: JavaScript, Types and Sets - Part I
 
 In this article I'll illustrate **how a mathematician could regard the JavaScript language and its type system**. 
 I'll talk about sets, functions and immutability, building a coherent framework of concepts. 
-This framework helps me to reason about the system while I'm coding. Hope it can help you too.
+This framework helps me to reason about the system while I'm coding. I hope it can help you too.
 
-Mathematicians for a long, long time and with terrific success use two fundamental building blocks: sets and functions.
+Mathematicians for a long, long time and with terrific success have used two fundamental building blocks: sets and functions.
 
 ## Sets
 
@@ -63,9 +63,9 @@ function len(str) {
 Can we define what is an input and an output with our new tool, the sets?
 Yes! In math a function `f` is a relation between a set A of inputs (also called *domain*) and a set B of permissible outputs (also called *codomain*) with the property that each input `a` is related to exactly one output `b = f(a)`. We denote this by `f: A -> B`
 
-> **Note**. In math **doesn't make sense** to apply a function `f` to an element that do not belong to its domain. I'll implement this fact in JavaScript throwing a `TypeError`.
+> **Note**. In math it **doesn't make sense** to apply a function `f` to an element that do not belong to its domain. I'll implement this fact in JavaScript throwing a `TypeError`.
 
-It turns out that when you write the JsDocs, you are actually stating what is the domain and the codomain of your function
+It turns out that when you write the JsDocs, you are actually stating which is the domain and the codomain of your function
 
 ```js
 /**
@@ -78,9 +78,9 @@ function len(str) {
 }
 ```
 
-> **Advice**. When you define a function, try to figure out what is the domain and the codomain. If you find it difficult, it could be a code smell.
+> **Advice**. When you define a function, try to figure out which is the domain and the codomain. If you find it difficult, it could be a code smell.
 
-Take your time to absorb these two paragraphs, read them a second time if needed, because with these basic tools I'm going to define an entire type system only combining sets! (like you can compose JavaScript functions).
+Take your time to absorb these two paragraphs, read them a second time if needed, because with these basic tools I'm going to define an entire type system only combining sets! (the same way you can compose JavaScript functions).
 
 From now on, I'll consider the words "set" and "type" interchangeables.
 
@@ -121,7 +121,7 @@ Positive(-1);   // throws TypeError
 Positive(2.5);  // => 2.5
 ```
 
-The `subtype` function is the first of a series of functions accepting a bunch of already defined types in input (and sometimes other values) and return a new type in output. I call this kind of functions **type combinators**.
+The `subtype` function is the first of a series of functions accepting a bunch of already defined types as input (and sometimes other values) and return a new type as output. I call this kind of functions **type combinators**.
 
 The `subtype` combinator, like the other combinators, can be applied, mixed and composed multiple times. Let's see an example
 
@@ -166,7 +166,7 @@ CSSTextAlign('left'); // => 'left'
 
 Have you noticed the choice of the names: `map` and `f`?
 "map" is a synonym of "function" and "f" is the conventional short name of a function... what's going on?
-Well, it turns out that hashes are another way of defining a function, where you list for all the
+Well, it turns out that hashes are another way of defining a function, where you list all the
 elements of the domain (always a subset of `Str`) the related value of the codomain:
 
 ```
@@ -213,7 +213,7 @@ When I look at an hash, what I **see** is a function. And from now on maybe you 
 
 Tuples and structs are two ways to express the **same math concept**: the *Cartesian product* of two sets A and B, denoted by `A × B` is the set of all ordered pairs `(a, b)` such that `a` is a member of A and `b` is a member of B. 
 
-The two objects in the code snippet above can be thought (*) belonging to the same set `Str × Num × Bool`. The only difference is that tuples are accesed by index, structs by name.
+The two objects in the code snippet above can be thought (*) belonging to the same set `Str × Num × Bool`. The only difference is that tuples are accessed by index, structs by name.
 
 (*) It's easy to define a bijective function `order` that maps the set of the struct props names to the set {0, 1, 2} of the tuple indexes:
 
@@ -304,14 +304,14 @@ Person({
 
 ## Set power!
 
-So far we have defined four combinators:
+So far I have defined four combinators:
 
 - subtype
 - enums
 - tuple
 - struct
 
-Let's compose all of them to prove the power of sets: I'll define the type `Climber` of all the italian males that have a favorable BMI (body mass index) to climb.
+Let's compose all of them to prove the power of sets: I'll define the type `Climber` of all the Italian males that have a favorable BMI (body mass index) to climb.
 
 ```js
 // helper types and functions
@@ -327,17 +327,17 @@ var Person = struct({
   body: Body
 });
 
-function getBMI(tuple) { return tuple[1] / Math.pow(tuple[0] / 100, 2); }
+function getBMI(height, weight) { return weight / Math.pow(height / 100, 2); }
 
-function isFavorable(p) {
-  var bmi = getBMI(p.body);
+function isFavorable(body) {
+  var bmi = getBMI(body[0], body[1]);
   return bmi >= 18.5 && bmi <= 25;
 }
 
 // here we are
 
 var Climber = subtype(Person, function (p) {
-  return (p.gender === 'Male') && (p.country === 'Italy') && isFavorable(p);
+  return (p.gender === 'Male') && (p.country === 'Italy') && isFavorable(p.body);
 });
 
 var giulio = {
@@ -354,8 +354,7 @@ Climber(giulio); // => giulio (yay)
 
 In the next part I'll talk about lists, unions, optional values and dictionaries.
 
-If you are reading this it's like you gave me a gift since speaking of math makes me always happy. 
-I hope you enjoyed this ride between sets and functions, thanks for reading.
+If you extended your patience up to these final lines you provided me with joy since speaking of math makes me always happy. I hope you enjoyed this ride between sets and functions, thanks for your time.
 
 Giulio
 
