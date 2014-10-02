@@ -3,9 +3,9 @@ layout: post
 title: JavaScript, Types and Sets - Part I
 ---
 
-## Abstract
+## Introduction
 
-In this article I'll illustrate **how a mathematician could regard the JavaScript language and its type system**. 
+In this article I'll illustrate how a mathematician could regard the JavaScript language and its type system. 
 I'll talk about sets, functions and immutability, building a coherent framework of concepts. 
 This framework helps me to reason about the system while I'm coding. I hope it can help you too.
 
@@ -166,7 +166,7 @@ CSSTextAlign('left'); // => 'left'
 
 Have you noticed the choice of the names: `map` and `f`?
 "map" is a synonym of "function" and "f" is the conventional short name of a function... what's going on?
-Well, it turns out that hashes are another way of defining a function, where you list all the
+Well, it turns out that hashes are another way of defining a function, where you list for all the
 elements of the domain (always a subset of `Str`) the related value of the codomain:
 
 ```
@@ -302,7 +302,7 @@ Person({
 
 > **Advice**. Remember to add `"use strict";` to your source files. From [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) "Nothing can be added to or removed from the properties set of a frozen object. Any attempt to do so will fail, either silently or by throwing a TypeError exception (most commonly, but not exclusively, when in strict mode)."
 
-## Set power!
+## Sets are expressive
 
 So far I have defined four combinators:
 
@@ -311,7 +311,7 @@ So far I have defined four combinators:
 - tuple
 - struct
 
-Let's compose all of them to prove the power of sets: I'll define the type `Climber` of all the Italian males that have a favorable BMI (body mass index) to climb.
+Let's compose all of them to prove the power and flexibility of sets: I'll define the type `Climber` of all the Italian males that have a favorable BMI (body mass index) to climb.
 
 ```js
 // helper types and functions
@@ -347,21 +347,20 @@ var giulio = {
   body: [178, 65]
 };
 
-Climber(giulio); // => giulio (yay)
+Climber(giulio); // => giulio
 ```
 
 ## Further reading
 
 In the next part I'll talk about lists, unions, optional values and dictionaries.
 
-If you extended your patience up to these final lines you provided me with joy since speaking of math makes me always happy. I hope you enjoyed this ride between sets and functions, thanks for your time.
+I hope you enjoyed this ride between sets and functions, thanks for reading.
 
 Giulio
 
-## Set theory is interesting but...
+## Examples
 
-If you want to see **these concepts in action**, here a few projects of mine:
+If you want to see these concepts in action:
 
 - [tcomb](https://github.com/gcanti) - Pragmatic runtime type checking for JavaScript based on type combinators
-- [tcomb-validation](https://gcanti.github.io/resources/tcomb-validation/playground/playground.html) - A general purpose JavaScript validation library based on type combinators 
-- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - ( **this is cool** ) Domain Driven Forms. Automatically generate form markup from a domain model 
+- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - Domain Driven Forms. Automatically generate form markup from a domain model 
