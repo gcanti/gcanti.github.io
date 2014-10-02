@@ -128,7 +128,7 @@ The `subtype` combinator, like the other combinators, can be applied, mixed and 
 ```js
 var PositiveInteger = subtype(Positive, function (b) {
   // here we are sure that b is a positive number
-  return b === parseInt(b, 10);
+  return b % 1 === 0;
 });
 
 PositiveInteger(-1);  // throws TypeError
