@@ -354,6 +354,8 @@ Climber(giulio); // => giulio
 
 In the next part I'll talk about lists, unions, optional values and dictionaries.
 
+I know, Math is not a popular topic, if you share with me the interest
+(in my case the passion) on the subject, please share this article with your friends.
 I hope you enjoyed this ride between sets and functions, thanks for reading.
 
 Giulio

@@ -214,6 +214,10 @@ var Person = struct({
 var person = new Person({surname: 'Canti', name: 'Giulio'});
 ```
 
+## Further reading
+
+This is an article explaining the rationale behind these reasons: [JavaScript, Types and Sets - Part I](https://gcanti.github.io/2014/09/29/javascript-types-and-sets.html)
+
 ## Implementation
 
 I used this pattern to implement [tcomb](https://github.com/gcanti). 
