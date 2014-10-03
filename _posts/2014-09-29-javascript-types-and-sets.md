@@ -146,7 +146,7 @@ Enums are a particular case of subtypes, where `B = Str` and `isA` is implemente
 // the enums combinator
 
 function enums(map) {
-  return Enums(Str, function (s) {
+  return subtype(Str, function (s) {
     return map.hasOwnProperty(s);
   });
 }
