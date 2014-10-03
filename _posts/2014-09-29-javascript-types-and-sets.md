@@ -240,7 +240,7 @@ function tuple(types) {
     // check input structure
     assert(Array.isArray(arr));
     types.forEach(function (type, i) {
-      arr[i] = type(arr[i]); // check i-th coordinate and dehydrate nested structures
+      arr[i] = type(arr[i]); // check i-th coordinate and hydrate nested structures
     });
     // makes the tuple immutable
     return Object.freeze(arr);
@@ -274,7 +274,7 @@ function struct(props) {
     for (var name in props) {
       if (props.hasOwnProperty(name)) {
         var type = props[name]
-        obj[name] = type(obj[name]); // check prop type and dehydrate nested structures
+        obj[name] = type(obj[name]); // check prop type and hydrate nested structures
       }
     }
     return Object.freeze(obj);
