@@ -39,7 +39,7 @@ Hashtags(['#javascript', 1]); // => throws TypeError
 Hashtags(['#javascript', '#types', '#sets']); // => ['#javascript', '#types', '#sets'] (immutable)
 ```
 
-> **Note**. In [JavaScript, Types and Sets - Part I](/2014/09/29/javascript-types-and-sets.html) I showed how hashes can be viewed as functions, it turns out that lists also can be viewed as functions:
+> **Note**. In [Part I](/2014/09/29/javascript-types-and-sets.html) I showed how hashes can be viewed as functions, it turns out that lists also can be viewed as functions:
 
 ```js
 // f: Num -> Str
@@ -56,18 +56,23 @@ You can even compose hashes and arrays. In math, function composition is the poi
 ```js
 // f: Str -> Num
 var f = {
-  title: 2,
-  lead: 1,
-  text: 0
+  a: 2,
+  b: 0,
+  c: 1
 };
 
 // g: Num -> Str
-var g = ['12px', '18px', '26px'];
+var g = ['b', 'c', 'a'];
 
 // h: Str -> Str
 var h = function (x) {
   return g[f[x]];
 };
+
+// h turns out to be the identity function and g the inverse function of f
+h('a'); // => 'a'
+h('b'); // => 'b'
+h('c'); // => 'c'
 ```
 
 ## Dictionaries
@@ -154,7 +159,7 @@ Person.dispatch = function (x) {
 };
 ```
 
-This is a good case for implementing a **tagged union**. From [Wikipedia](http://en.wikipedia.org/wiki/Tagged_union): "A tagged union is a data structure used to hold a value that could take on several different, but fixed types. Only one of the types can be in use at any one time, and a tag field explicitly indicates which one is in use".
+This is a good occasion for implementing a **tagged union**. From [Wikipedia](http://en.wikipedia.org/wiki/Tagged_union): "A tagged union is a data structure used to hold a value that could take on several different, but fixed types. Only one of the types can be in use at any one time, and a tag field explicitly indicates which one is in use".
 
 ```js
 var Employer = struct({
@@ -199,7 +204,7 @@ new Person({
 
 ## Optional values
 
-Optional values of type `Type` can be modeled as the union of `Nil` and `Type`.
+Optional values of type `A` can be modeled as the union of `Nil` and `A`.
 
 ```js
 // the maybe combinator
@@ -225,7 +230,7 @@ OptionalStr('hello');   // => 'hello'
 I think Math can bring to software development a real benefit: its methodology. Math has proven **over the centuries**
 to be a successful paradigm (quite everything around us is built on it) in terms of achievements and (why not) beauty. 
 
-Domain models as set definitions, functions as theorems and immutability can be extremely useful tools to build a highly reliable system.
+According to this methodology the domain models are a series of set definitions, functions must be defined clearly specifying domain and codomain and immutability is everywhere.
 
 It's a good time to be a mathematician and a programmer: functional programming starts to go mainstream and libraries like React.js
 do a good job to prove that well founded functional software can be also pragmatic.
