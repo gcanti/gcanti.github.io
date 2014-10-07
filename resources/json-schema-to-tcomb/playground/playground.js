@@ -5,6 +5,7 @@ var fcomb = require('fcomb');
 var assert = t.assert;
 var Str = t.Str;
 var Num = t.Num;
+var Bool = t.Bool;
 var Obj = t.Obj;
 var Arr = t.Arr;
 var subtype = t.subtype;
@@ -17,21 +18,8 @@ function and(f, g) {
 }
 
 var isInteger = fcomb.util.addDoc(function isInteger(n) {
-  return n === parseInt(n, 10);
+  return n % 1 === 0;
 }, 'an integer number');
-
-var email = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
-
-// TODO: found regexps
-var formats = {
-  'date-time': null,
-  // thanks to https://github.com/chriso/validator.js
-  email: /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i,
-  hostname: null,
-  ipv4: null,
-  ipv6: null,
-  uri: null
-};
 
 var types = {
 
@@ -48,9 +36,6 @@ var types = {
     }
     if (s.hasOwnProperty('pattern')) {
       predicate = and(predicate, fcomb.regexp(new RegExp(s.pattern)));
-    }
-    if (s.hasOwnProperty('format')) {
-      predicate = and(predicate, fcomb.regexp(formats[s.format]));
     }
     return predicate ? subtype(Str, predicate) : Str;
   },
@@ -74,7 +59,7 @@ var types = {
   },
 
   boolean: function (s) {
-    return t.Bool;
+    return Bool;
   },
 
   object: function (s) {
@@ -90,7 +75,7 @@ var types = {
       if (s.properties.hasOwnProperty(k)) {
         hasProperties = true;
         var type = toType(s.properties[k]);
-        props[k] = required[k] ? type : t.maybe(type);
+        props[k] = required[k] || type === Bool ? type : t.maybe(type);
       }
     }
     return hasProperties ? t.struct(props, s.description) : Obj;
@@ -104,7 +89,14 @@ var types = {
       }
       return t.tuple(items.map(toType));
     }
-    return Arr;
+    var predicate;
+    if (s.hasOwnProperty('minItems')) {
+      predicate = and(predicate, fcomb.minLength(s.minItems));
+    }
+    if (s.hasOwnProperty('maxItems')) {
+      predicate = and(predicate, fcomb.maxLength(s.maxItems));
+    }
+    return predicate ? subtype(Arr, predicate) : Arr;
   },
 
   null: function () {
@@ -21080,11 +21072,13 @@ $(function () {
     {id: 'required', label: '1. Required fields'},
     {id: 'optional', label: '2. Optional fields'},
     {id: 'enums', label: '3. Enums'},
-    {id: 'subtypes', label: '4. String minLength'},
-    {id: 'list', label: '5. List of strings'},
-    {id: 'listOfIntegers', label: '6. List of integers'},
-    {id: 'listOfObjects', label: '7. List of objects'},
-    {id: 'nested', label: '8. Nested structures'}
+    {id: 'strings', label: '4. Strings'},
+    {id: 'numbers', label: '5. Numbers'},
+    {id: 'booleans', label: '6. Booleans'},
+    {id: 'list', label: '7. List of strings'},
+    {id: 'listOfIntegers', label: '8. List of integers'},
+    {id: 'listOfObjects', label: '9. List of objects'},
+    {id: 'nested', label: '10. Nested structures'}
   ];
 
   var examples = {};
@@ -21114,7 +21108,7 @@ $(function () {
 
   function renderFormValues(value) {
     var html = '<h3>Form values</h3>';
-    html += 'This is an instance of the type. Open up the console to see the details.<br/><br/>';
+    //html += 'This is an instance of the type. Open up the console to see the details.<br/><br/>';
     html += '<div class="alert alert-success"><pre>' + JSON.stringify(value, null, 2) + '</pre></div>';
     $formValues.show().html(html);
   }
@@ -21131,7 +21125,7 @@ $(function () {
         evt.preventDefault();
         var value = this.refs.form.getValue();
         if (value) {
-          console.log(value); 
+          //console.log(value); 
           renderFormValues(value);
         }
       },
@@ -21147,11 +21141,12 @@ $(function () {
   }
 
   function run() {
+    var getKind = t.util.getKind;
     var json = cm.getValue();
     try {
       var schema = JSON.parse(json);
       var type = toType(schema);
-      var kind = t.util.getKind(type);
+      var kind = getKind(type);
       t.assert(kind === 'struct' || kind === 'list', 'Only object and list schemas are allowed');
       var create = kind === 'struct' ? t.form.createForm : t.form.createList;
       var opts = {
@@ -21160,7 +21155,7 @@ $(function () {
             return type === Num ? String(x || '') : x;
           },
           parse: function (value, type) {
-            return type === Num ? parseFloat(value) : value;
+            return type === Num || (getKind(type) === 'subtype' && type.meta.type === Num) ? parseFloat(value) : value;
           }
         }
       };

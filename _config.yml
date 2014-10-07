@@ -24,7 +24,7 @@ projects:
   name: tcomb-form
   link: https://github.com/gcanti/tcomb-form
   markdown: "[tcomb](https://github.com/gcanti/tcomb-form)"
-  description: "<b>Domain Driven Forms</b>. Automatically generate form markup from a domain model. Check out the <a href='/resources/tcomb-form/playground/playground.html'>Playground</a>."
+  description: "<b>Domain Driven Forms</b>. Automatically generate form markup from a domain model. Check out the <a href='/resources/tcomb-form/playground/playground.html'>Playground</a>. There is also a <a href='/resources/json-schema-to-tcomb/playground/playground.html'>variant</a> where forms are generated from a JSON Schema."
  tcomb:
   name: tcomb
   link: https://github.com/gcanti/tcomb

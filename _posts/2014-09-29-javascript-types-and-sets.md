@@ -360,7 +360,7 @@ I hope you enjoyed this ride between sets and functions, thanks for reading.
 
 Giulio
 
-## Examples
+## Real world examples
 
 If you want to see these concepts in action:
 
