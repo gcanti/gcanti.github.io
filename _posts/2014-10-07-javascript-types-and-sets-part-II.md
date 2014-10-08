@@ -1,6 +1,6 @@
 ---
 layout: post
-title: JavaScript, Types and Sets - Part II (draft)
+title: JavaScript, Types and Sets - Part II
 ---
 
 ## Summary
