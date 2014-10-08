@@ -352,7 +352,7 @@ Climber(giulio); // => giulio
 
 ## Further reading
 
-In the next part I'll talk about lists, unions, optional values and dictionaries.
+In the [next part](https://gcanti.github.io/2014/10/07/javascript-types-and-sets-part-II.html) I'll talk about lists, unions, optional values and dictionaries.
 
 I know, Math is not a popular topic, if you share with me the interest
 (in my case the passion) on the subject, please share this article with your friends.
