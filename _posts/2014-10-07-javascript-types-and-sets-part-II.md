@@ -189,13 +189,13 @@ Person.dispatch = function (x) {
   if (x.tag === 'employee') return Employee;
 };
 
-new Person({
+Person({
   tag: 'employer', 
   name: 'Mark', 
   surname: 'Zuckerberg'
 }); // => new Employer({name: 'Mark', surname: 'Zuckerberg'});
 
-new Person({
+Person({
   tag: 'employee', 
   name: 'Giulio', 
   surname: 'Canti'

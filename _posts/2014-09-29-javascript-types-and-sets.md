@@ -269,6 +269,8 @@ function struct(props) {
   return function Struct(obj) {
     // makes Struct idempotent
     if ( obj instanceof Struct ) return obj;
+    // makes new optional
+    if ( !(this instanceof Struct) ) return new Struct(obj);
     // check input structure
     assert(isObject(obj));
     for (var name in props) {
