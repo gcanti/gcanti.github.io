@@ -239,11 +239,10 @@ function tuple(types) {
   return function Tuple(arr) {    
     // check input structure
     assert(Array.isArray(arr));
-    types.forEach(function (type, i) {
-      arr[i] = type(arr[i]); // check i-th coordinate and hydrate nested structures
-    });
-    // makes the tuple immutable
-    return Object.freeze(arr);
+    // check i-th coordinate and hydrate nested structures
+    return Object.freeze(arr.map(function (el, i) {
+      return types[i](el);
+    }));
   };
 }
 
@@ -273,13 +272,14 @@ function struct(props) {
     if ( !(this instanceof Struct) ) return new Struct(obj);
     // check input structure
     assert(isObject(obj));
+    var ret = {};
     for (var name in props) {
       if (props.hasOwnProperty(name)) {
-        var type = props[name]
-        obj[name] = type(obj[name]); // check prop type and hydrate nested structures
+        var type = props[name];
+        ret[name] = type(obj[name]); // check prop type and hydrate nested structures
       }
     }
-    return Object.freeze(obj);
+    return Object.freeze(ret);
   };
 }
 

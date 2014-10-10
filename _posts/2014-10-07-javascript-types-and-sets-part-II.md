@@ -27,10 +27,8 @@ function list(type) {
   return function List(arr) {
     // check input structure
     assert(Array.isArray(arr));
-    arr.forEach(function (element, i) {
-      arr[i] = type(element); // check i-th coordinate and hydrate nested structures
-    });
-    return Object.freeze(arr);
+    // check i-th coordinate and hydrate nested structures
+    return Object.freeze(arr.map(type));
   };
 }
 
@@ -86,12 +84,13 @@ function dict(type) {
   return function Dic(obj) {
     // check input structure
     assert(isObject(obj));
+    var ret = {};
     for (var k in obj) {
       if (obj.hasOwnProperty(k)) {
-        obj[k] = type(obj[k]); // check prop and hydrate nested structures
+        ret[k] = type(obj[k]); // check prop and hydrate nested structures
       }
     }
-    return Object.freeze(obj);
+    return Object.freeze(ret);
   };
 }
 
