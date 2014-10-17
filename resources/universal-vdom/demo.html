@@ -9,142 +9,203 @@ title: Universal VDOM demo
 <![endif]-->
 <link type="text/css" rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/0.11.2/react.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mithril/0.1.22/mithril.min.js"></script>
 <div id="app"></div>
 <script>
-// React v0.11.2
+  // React v0.11.2
+  // Mithril 0.1.22
 
-/*
-  
-  UNIVERSAL VDOM
 
-  type Node = {
-    tag: string,
-    attrs: Nil | Attrs,
-    children: Child | Array<Child>
-  }
+  /*
+    
+    UNIVERSAL VDOM
 
-  type Nil = null | undefined
-
-  type Attrs = {
-    className: Nil | string | Array<string> | ClassName,
-    style: Nil | Style,
-    onClick: function,
-    etc..
-  }
-
-  type ClassName = Dictionary<boolean> // like React cx()
-
-  type Style = {
-    'text-align': string,
-    'z-index': number,
-    etc..
-  }
-
-  type Child = Nil | string | Node
-
-*/
-
-//
-// helpers
-//
-
-// transforms an array or an hash of classes to a string
-function cx(classNames) {
-  if (Array.isArray(classNames)) {
-    return classNames.join(' ');
-  } else if (typeof classNames === 'object') {
-    return Object.keys(classNames).filter(function(className) {
-      return classNames[className];
-    }).join(' ');
-  }
-  return classNames;
-}
-
-// useful to preserve the original hash
-function clone(x) {
-  var ret = {};
-  for (var k in x) {
-    if (x.hasOwnProperty(k)) ret[k] = x[k];
-  }
-  return ret;
-}
-
-// toReactElement: VDOM -> ReactElement
-// transforms a universal vdom to a React renderable
-function toReactElement(vdom) {
-  
-  var tag = vdom.tag;
-  var attrs = vdom.attrs;
-  if (attrs) {
-    attrs = clone(attrs);
-    attrs.className = cx(attrs.className);
-  }
-  var children = vdom.children;
-
-  if (typeof tag === 'string') {
-    tag = React.DOM[tag];
-  }
-  
-  if (Array.isArray(children)) {
-    children = children.map(toReactElement);
-  } else if (typeof children === 'object') {
-    children = toReactElement(children);
-  }
-
-  // use `apply` to avoid React warnings
-  return React.createElement.apply(React, [tag, attrs].concat(children));
-}
-
-// toReactClass: (Func, Func) -> ReactClass
-// tranforms a pair (controller, view) to a React class
-function toReactClass(controller, view) {
-  return React.createClass({
-    render: function () {
-      var state = this.props;
-      var v = view(state, controller(state, this.setProps.bind(this)));
-      return toReactElement(v);
+    type Node = {
+      tag: string,
+      attrs: Nil | Attrs,
+      children: Child | Array<Child>
     }
-  });
-}
 
-//
-// example 
-// Note how both controller and view are decoupled from React
-// I'll try to compile them to Mithril, mercury, Ractive, etc.....
-// (another issue is composition)
-// 
+    type Nil = null | undefined
 
-function controller(state, setState) {
-  return {
-    doIncrement: function () {
-      // `state` and `setState` aren't React things
-      setState({count: state.count + 1});
+    type Attrs = {
+      className: Nil | string | Array<string> | ClassName,
+      style: Nil | Style,
+      onClick: function,
+      etc..
     }
-  };
-}
 
-function view(state, controller) {
-  return {
-    tag: 'div',
-    children: [
-      {
-        tag: 'h1',
-        children: state.count
-      },
-      {
-        tag: 'button',
-        attrs: {
-          className: {'btn': true, 'btn-primary': true},
-          onClick: controller.doIncrement
-        },
-        children: 'Click me'
+    type ClassName = Dictionary<boolean> // like React cx()
+
+    type Style = {
+      'text-align': string,
+      'z-index': number,
+      etc..
+    }
+
+    type Child = Nil | string | Node
+
+  */
+
+  //
+  // helpers
+  //
+
+  // transforms an array or an hash of classes to a string
+  function cx(classNames) {
+    if (Array.isArray(classNames)) {
+      return classNames.join(' ');
+    } else if (typeof classNames === 'object') {
+      return Object.keys(classNames).filter(function(className) {
+        return classNames[className];
+      }).join(' ');
+    }
+    return classNames;
+  }
+
+  // useful to preserve the original hash
+  function clone(x) {
+    var ret = {};
+    for (var k in x) {
+      if (x.hasOwnProperty(k)) ret[k] = x[k];
+    }
+    return ret;
+  }
+
+  function mixin(x, y) {
+    for (var k in y) {
+      if (y.hasOwnProperty(k)) x[k] = y[k];
+    }
+  }
+
+  //
+  // React
+  //
+
+  // toReactElement: VDOM -> ReactElement
+  // transforms a universal vnode to a React renderable
+  function toReactElement(node) {
+    if (Array.isArray(node)) {
+      if (node.length === 1) {
+        return toReactElement(node[0]);
       }
-    ]
-  };
-}
+      return node.map(toReactElement);
+    } else if (typeof node === 'object') {
+      var tag = node.tag;
+      if (typeof tag === 'string') {
+        tag = React.DOM[tag];
+      }
+      var attrs = node.attrs;
+      if (attrs) {
+        attrs = clone(attrs);
+        attrs.className = cx(attrs.className);
+      }
+      var children = toReactElement(node.children);
+      // use `apply` to avoid React warnings
+      return React.createElement.apply(React, [tag, attrs].concat(children));
+    }
 
-var CounterComponent = toReactClass(controller, view);
-var state = {count: 0};
+    return node;
+  }
 
-React.renderComponent(CounterComponent(state), document.getElementById('app'));
+  // toReactClass: (Func, Func) -> ReactClass
+  // tranforms a pair (controller, view) to a React class
+  function toReactClass(controller, view) {
+    return React.createClass({
+      render: function () {
+        var state = this.props;
+        var v = view(state, controller(state, this.setProps.bind(this)));
+        return toReactElement(v);
+      }
+    });
+  }
+
+  //
+  // Mithril
+  //
+
+  function toMithrilElement(node) {
+    if (Array.isArray(node)) {
+      if (node.length === 1) {
+        return toMithrilElement(node[0]);
+      }
+      return node.map(toMithrilElement);
+    } else if (typeof node === 'object') {
+      var tag = node.tag;
+      var attrs = node.attrs;
+      if (attrs) {
+        attrs = clone(attrs);
+        attrs.className = cx(attrs.className);
+        attrs.onclick = attrs.onClick;
+      }
+      var children = toMithrilElement(node.children);
+      if (attrs) {
+        return m(tag, attrs, children);
+      }
+      return m(tag, children);
+    }
+
+    return node;
+  }
+
+  function toMithrilModule(controller, view, state) {
+    controller = controller(state, function (state) {
+      mixin(module.state, state);
+    });
+    var module = {
+      state: state,
+      controller: function () {
+        return controller; 
+      },
+      view: function () {
+        return toMithrilElement(view(module.state, controller));
+      }
+    };
+    return module;
+  }
+
+  //
+  // example 
+  // Note how both controller and view are decoupled from React
+  // I'll try to compile them to Mithril, mercury, Ractive, etc.....
+  // (another issue is composition)
+  // 
+
+  function controller(state, setState) {
+    return {
+      doIncrement: function () {
+        // `state` and `setState` aren't React things
+        setState({count: state.count + 1});
+      }
+    };
+  }
+
+  function view(state, controller) {
+    return {
+      tag: 'div',
+      children: [
+        {
+          tag: 'h3',
+          children: state.count
+        },
+        {
+          tag: 'button',
+          attrs: {
+            className: {'btn': true, 'btn-primary': true},
+            onClick: controller.doIncrement
+          },
+          children: 'Click me'
+        }
+      ]
+    };
+  }
+
+  var state = {count: 0};
+
+  var ReactComponent = toReactClass(controller, view);
+  React.renderComponent(ReactComponent(state), document.getElementById('react'));
+
+  var MithrilModule = toMithrilModule(controller, view, state);
+  m.module(document.getElementById('mithril'), MithrilModule);
+
 </script>
