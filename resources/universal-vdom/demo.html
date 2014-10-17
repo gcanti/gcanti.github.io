@@ -35,7 +35,7 @@ title: Universal VDOM demo
     <div class="col-md-12">
       <h2>Source (<a href="https://gist.github.com/gcanti/52d6240ee8e51b857985">Gist</a>)</h2>
       <pre>
-// this is the view      
+// testable view: you can inject a state or a mock controller
 function view(state, controller) {
   return {
     tag: 'div',
@@ -56,7 +56,6 @@ function view(state, controller) {
   };
 }
 
-// this is the controller
 function controller(state, setState) {
   return {
     doIncrement: function () {
