@@ -66,7 +66,7 @@ if my views output HTML. Even worse, the users of my library are tied to me (wel
 
 ## VDOM Definition
 
-Let's implement a VDOM as JSON DSL, this is its minimal (in)formal type definition:
+Let's implement a virtual dom called **UVDOM** as JSON DSL, this is its minimal (in)formal type definition:
 
 ```js
 type VDOM = Node | Array<Node> // a tree or a forest
@@ -150,7 +150,7 @@ var paragraph = {
 
 ### Mithril
 
-Quite the same, the only difference is:
+Quite the same as UVDOM, the only difference is:
 
 - `className` is a `string`
 
@@ -159,13 +159,8 @@ Quite the same, the only difference is:
 - `tag` is named `tagName`
 - `attrs` is named `properties`
 - `className` is a string (I think)
-- there is an additional property `namespace`
+- there is an additional property `namespace` for SVG support
 
-```js
-{ 
-  tagName: string, 
-  properties: object<string, any>, 
-  children: Array<Node>, 
-  namespace: string 
-}
-```
+## Implementing views
+
+
