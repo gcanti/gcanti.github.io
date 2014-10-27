@@ -27,8 +27,8 @@ Roughly these are the steps I forsee:
     - An unoptimized reimplementation with jQuery
 - **Optimizations**: Part 3
     - Components
-        - Private state
-        - Methods
+    - Private state
+    - Methods
     - VDOM diffs and patches
 
 ## A bit of history
@@ -55,8 +55,8 @@ Now I see why React can be easily rendered server side: it's not a plus or a sec
 Why? Here three major reasons:
 
 - Performance
-- Testability
 - Flexibility
+- Testability
 
 ### Performance
 
@@ -66,31 +66,31 @@ Can be surprising but the history of React tells us that:
 
 > [@Vjeux](https://twitter.com/Vjeux)
 
-If you want a simple architecture like ReqRes **and** you have performance issues **then** you must implement a diff algorithm:
+If you want a simple architecture like ReqRes **and** you have performance issues **then** it's a good idea to implement a diff algorithm:
 `ReqRes + Perf => VDOM + diff`.
 
-Let me rephrase that: if you want a simple architecture like ReqRes and you have no performance issues then you could end up with the client equivalent of "re-render the entire page":  `innerHTML`.
+Let me rephrase: if you want a simple architecture like ReqRes and you have no performance issues then you could simply end up with the client equivalent of "re-render the entire page":  `innerHTML`.
 
 So one goal among others of the React team was to bring the simple ReqRes architecture to the client, while diffing and patching is an (awesome) implementation detail (this explains my choice to put them in the "Optimizations" part). 
 
 I had the same goal three years ago when in [madai](http://madai.com/consumer/us/home.html) I implemented the internal framework based on ReqRes and on an idea similar to [om](https://github.com/swannodette/om): a single point of mutability. At that time React wasn't there and since we had no performance issues I implemented the re-rendering with an `innerHTML` of the app root to keep things KISS-y. This series of posts is grounded on the experience of these three years.
 
+### Flexibility
+
+Even if you have no performance issues, a VDOM can be extremely useful. As a frontend library author I'd like to target as many frontend and css framework as possible, but it's very difficult to achieve this goal if my views output HTML. Even worse, the users of my library are tied to me (well some author might be happy with this lock-in). If they are not satisfied by the output, they must ask and wait for a change, or fork the library if it's open source. Conversely if I'd output VDOMs, they will be able to patch the output autonomously, customize styles, remove unnecessary nodes, and so on.
+
 ### Testability
 
-Even if you have no performance issues, a VDOM can be extremely useful. I want to easily test my views in all circumstances and with simple tools (no more HTML please!). The simplest solution I can think of is:
+I'd like to easily test my views in all circumstances and with simple tools (no more HTML please!). The simplest solution I can think of is:
 
 - the view output is determined by a single immutable data structure representing its state
-- the view output should be unit testable without messing around with HTML, PhantomJS, Selenium...
+- the view output should be unit testable without messing around with DOM, HTML, PhantomJS...
 
 Do you want to show to somebody how your app will be rendered in some particular circumstance? Take the proper view, inject the proper state and ...bang! the browser show you the result.
 
 Did you write a form library and you must test the gazzilion of possible outputs? What about writing a test suite with only Node.js and `assert.deepEqual`?
 
-### Flexibility
-
-As a frontend library author I'd like to target as many frontend and css framework as possible, but it's very difficult to achieve this goal if my views output HTML. Even worse, the users of my library are tied to me (well some author might be happy with this lock-in). If they are not satisfied by the output, they must ask and wait for a change, or fork the library if it's open source. Conversely if I'd output VDOMs, they will be able to patch the output autonomously, customize styles, remove unnecessary nodes, and so on.
-
-### Virtual DOM definition
+## Virtual DOM definition
 
 Let's design a virtual dom as a JSON DSL, here its minimal (in)formal type definition:
 
@@ -191,42 +191,38 @@ var paragraph = {
 
 ## Implementing views
 
-Let `JSON` be the set of all the JSON data structures, then a **view** is a [pure](http://en.wikipedia.org/wiki/Pure_function) function `view: JSON -> VDOM`, that is a function accepting a state represented by a JSON and returning a VDOM.
+Let `Data` be the set of all the data structures, then a *view* is a [pure](http://en.wikipedia.org/wiki/Pure_function) function `view: Data -> VDOM`, that is a function accepting a state and returning a VDOM.
 
-### Views customization
+### Flexibility: views customization
 
-An interesting property of such views is that they can be composed with any function returning a JSON, included other views. This means that you can use the power of functional programming in the world of views:
+An interesting property of such views is that they can be composed with any function, included other views. This means you can use the power of functional programming in the view world:
 
 ```js
-// button without styling: the output of my generic library
-function button(className) {
+// button: object -> VDOM (a view without styling, the output of my library)
+function button(style) {
   return {
     tag: 'button',
-    attrs: {className: className}
+    attrs: {className: style}
   };
 }
 
-// helper
-function style(base, kind) {
-  var style = {};
-  style[base] = true;
-  style[kind] = true;
+// boostrap: string -> object (Bootstrap 3 style)
+function bootstrap(type) {
+  var style = {btn: true};
+  style['btn-' + type] = true;
   return style;
 }
 
-// Bootstrap 3 style
-function bootstrap(type) {
-  return style('btn', 'btn-' + type);
-}
-
-// Pure css style
+// boostrap: string -> object (Pure css style)
 function pure(type) {
-  return style('pure-button', 'pure-button-' + type);
+  var style = {'pure-button': true};
+  style['pure-button-' + type] = true;
+  return style;
 }
 
-// Bootstrap 3 button
+// bootstrapButton: string -> VDOM
 var bootstrapButton = compose(button, bootstrap);
-// Pure css button
+// pureButton: string -> VDOM
 var pureButton = compose(button, pure);
 
 console.log(bootstrapButton('primary'));
@@ -246,10 +242,12 @@ prints
 }
 ```
 
-This is what I call flexibility. React, Mithril and mercury have a similar approach: they rely on the expressiviness
-of JavaScript in order to define views instead of defining a separate template language.
+You get flexibility without loss of control:
 
-Structure and function composition are two building blocks of mathematics thus you can be sure this approach is well founded and battle tested **for a few centuries**. But what about scalability?
+- rely on the expressiviness of JavaScript in order to define views instead of defining a separate template language 
+- the output of a view is determined by its input
+
+**Structure and function composition** are two building blocks of mathematics thus you can be sure this approach is well founded and battle tested for a few centuries.
 
 ### Tests
 
