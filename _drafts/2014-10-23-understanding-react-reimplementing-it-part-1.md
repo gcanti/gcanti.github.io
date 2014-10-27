@@ -5,8 +5,11 @@ title: "Understanding React reimplementing it Part 1: Views"
 
 ## Abstract
 
-After this [thread](http://www.reddit.com/r/javascript/comments/2jav2q/is_there_any_good_standalone_implementation_of/) on Reddit I started a journey to understand what can be generalized and unified in the different implementations of a React-like library. The best way I know to understand a thing isn't just to learn how it works but **which problems** it's trying to solve and **why it's designed** like this. What follows is *my own interpretation*, I'll design an abstract model and I'll try to add notes when I think there is a corresponding implementation in [React](http://facebook.github.io/react/), [Mitrhil](http://lhorie.github.io/mithril/) and [Mercury](https://github.com/Raynos/mercury).
-Feel free to disagree and criticize, in fact I'll be pleased to argue and improve my knowledge.
+After this [thread](http://www.reddit.com/r/javascript/comments/2jav2q/is_there_any_good_standalone_implementation_of/) on Reddit I started a journey to understand what can be generalized and unified in the different implementations of a React-like library. The best way I know to understand a thing isn't just to learn how it works but **which problems** it's trying to solve and **why it's designed** like this. 
+
+To abstract the design process, I'll present a minimal model and I'll add feature after feature trying to explain the design decisions and, when possible, pointing to the corresponding implementations in [React](http://facebook.github.io/react/), [Mitrhil](http://lhorie.github.io/mithril/) and [Mercury](https://github.com/Raynos/mercury).
+
+What follows is *my own interpretation* of React, feel free to criticize and contribute.
 
 ## Roadmap
 
@@ -17,20 +20,20 @@ Roughly these are the steps I forsee:
     - Implementing a virtual DOM
     - Implementing views
     - Isomorphic JavaScript
-- **State and controllers**: Part 2
+- **Controllers**: Part 2
     - Events
+    - Writing and reading from the DOM
     - Apps as finite state machines
     - An unoptimized reimplementation with jQuery
 - **Optimizations**: Part 3
     - Components
-        - Reading from the DOM
         - Private state
         - Methods
     - VDOM diffs and patches
 
 ## A bit of history
 
-History is fundamental to understand why we have a particular result, libraries like React doesn't appear from the thin air:
+History is fundamental to understand why we have a particular artifact, libraries like React don't appear from the thin air:
 
 > So, the history of React is that we had this awesome way of building front-end on PHP called [XHP]( http://codebeforethehorse.tumblr.com/post/3096387855/an-introduction-to-xhp). We had been using it very successfully on the server for a while and when you moved to JS you were left with bare DOM manipulation which was terrible.
 
@@ -44,8 +47,8 @@ History is fundamental to understand why we have a particular result, libraries 
 
 > [@Vjeux](https://twitter.com/Vjeux)
 
-So the roots of React dive into the **plain old request / response cycle** between client and server (further referred to as `ReqRes`).
-Now I see why React components can be easily rendered server side: it's not a plus or a second thought, server side rendering belongs to its DNA!
+So the roots of React dive into the **plain old request / response cycle** between client and server (further referred to as ReqRes).
+Now I see why React can be easily rendered server side: it's not a plus or a second thought, server side rendering belongs to its DNA!
 
 ## Implementing a virtual DOM
 
@@ -63,14 +66,14 @@ Can be surprising but the history of React tells us that:
 
 > [@Vjeux](https://twitter.com/Vjeux)
 
-So if you want a simple architecture like `ReqRes` **and** you have performance issues **then** you must implement a diff algorithm:
+If you want a simple architecture like ReqRes **and** you have performance issues **then** you must implement a diff algorithm:
 `ReqRes + Perf => VDOM + diff`.
 
-Let me rephrase that: if you want a simple architecture like `ReqRes` and you have no performance issues then you could end up with the client equivalent of "re-render the entire page":  `innerHTML`.
+Let me rephrase that: if you want a simple architecture like ReqRes and you have no performance issues then you could end up with the client equivalent of "re-render the entire page":  `innerHTML`.
 
-The moral of the story is: one goal, among others, of the React team was to bring the simple `ReqRes` architecture to the client, while diffing and patching is an (awesome) implementation detail (this explains my choice to put them in the "Optimizations" part). 
+So one goal among others of the React team was to bring the simple ReqRes architecture to the client, while diffing and patching is an (awesome) implementation detail (this explains my choice to put them in the "Optimizations" part). 
 
-So was my goal three years ago when in [madai](http://madai.com/consumer/us/home.html) I implemented the internal framework based on an idea similar to [om](https://github.com/swannodette/om): a single point of mutability. At that time React wasn't there and since we had no performance issues I implemented the re-rendering with an `innerHTML` of the app root to keep things KISS-y. This series of posts is grounded on the experience of these three years.
+I had the same goal three years ago when in [madai](http://madai.com/consumer/us/home.html) I implemented the internal framework based on ReqRes and on an idea similar to [om](https://github.com/swannodette/om): a single point of mutability. At that time React wasn't there and since we had no performance issues I implemented the re-rendering with an `innerHTML` of the app root to keep things KISS-y. This series of posts is grounded on the experience of these three years.
 
 ### Testability
 
@@ -81,7 +84,7 @@ Even if you have no performance issues, a VDOM can be extremely useful. I want t
 
 Do you want to show to somebody how your app will be rendered in some particular circumstance? Take the proper view, inject the proper state and ...bang! the browser show you the result.
 
-Did you write a form library and you must test the gazzilion of possible outputs? What about writing a test suite with only Node.js and `assert.deepEqual`? I'll show you a way.
+Did you write a form library and you must test the gazzilion of possible outputs? What about writing a test suite with only Node.js and `assert.deepEqual`?
 
 ### Flexibility
 
@@ -100,17 +103,17 @@ type Node = {
   tag: string
   attrs: Nil | {
     style:      Nil | object<string, any>,
-    className:  Nil | object<string, boolean>, // easy to patch and manage
-    xmlns:      Nil | string, // handle namespaces
+    className:  Nil | object<string, boolean>,
+    xmlns:      Nil | string, // namespaces
     ...
   },
   children: Nil | string | VDOM
 }
 ```
 
-> **Note**. `tag` is a string since the browser actually allows any name, and Web Components will use this fact for people to write custom names.
+**Note**. `tag` is a string since the browser actually allows any name, and Web Components will use this fact for people to write custom names. `className` is a dictionary `string -> boolean` since it's easy to patch and manage (like React `cx(className)`).
 
-Example:
+**Example:**
 
 ```js
 // <a href="http://www.google.com">here</a>
@@ -145,7 +148,7 @@ All the implementations are similar:
 - `className` is a `string`
 - `children` is merged in `props`
 
-React calls a virtual node `ReactDOMElement` ([React (Virtual) DOM Terminology](https://gist.github.com/sebmarkbage/fcb1b6ab493b0c77d589)).
+React calls a virtual node `ReactDOMElement` ([React Virtual DOM Terminology](https://gist.github.com/sebmarkbage/fcb1b6ab493b0c77d589)).
 
 ```js
 // <a href="http://www.google.com">here</a>
