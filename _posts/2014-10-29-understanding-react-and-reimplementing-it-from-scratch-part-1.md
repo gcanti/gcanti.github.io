@@ -92,10 +92,10 @@ Did you write a form library and you must test the gazzilion of possible outputs
 
 ## Virtual DOM definition
 
-Let's design a virtual dom as a JSON DSL, here its minimal (in)formal type definition:
+Let's design a virtual dom as a JSON DSL (further referred to as universal VDOM or `UVDOM`), here its minimal (in)formal type definition:
 
 ```js
-type VDOM = Node | Array<Node> // a tree or a forest
+type UVDOM = Node | Array<Node> // a tree or a forest
 
 type Nil = null | undefined
 
@@ -107,7 +107,7 @@ type Node = {
     xmlns:      Nil | string, // namespaces
     ...
   },
-  children: Nil | string | VDOM
+  children: Nil | string | UVDOM
 }
 ```
 
@@ -167,10 +167,10 @@ React calls a virtual node `ReactDOMElement` ([React Virtual DOM Terminology](ht
 
 ## Implementing views
 
-Let `JSON` be the set of all the JSON data structures and `VDOM` a virtual DOM implementation, then we call a `VDOM`-*view* a [pure](http://en.wikipedia.org/wiki/Pure_function) function `view: JSON -> VDOM`, that is a function accepting a JSON state and returning a virtual DOM.
+Let `JSON` be the set of all the JSON data structures and `VDOM` a virtual DOM implementation, then we call a *view* a [pure](http://en.wikipedia.org/wiki/Pure_function) function such that `view: JSON -> VDOM`, that is a function accepting a JSON state and returning a virtual DOM.
 
-**Definition**. A *view system* is a pair `(VDOM, View)` where `VDOM` is a virtual DOM implementation
-and `View` is the set of all the `VDOM`-views.
+**Definition**. A `VDOM`-*view system* is a pair `(VDOM, View)` where `VDOM` is a virtual DOM implementation
+and `View` is the set of all the related views. Let's call *universal view system* the `UVDOM`-view system.
 
 ```js
 // a simple view, outputs a bolded link
@@ -295,7 +295,7 @@ All the implementations are similar:
 
 **React**
 
-As of v0.12.0-rc1 you can express directly the VDOM as a data structure rather than use the helper functions provided in the `React.DOM` namespace.
+As of v0.12.0 you can express directly the VDOM as a data structure rather than use the helper functions provided in the `React.DOM` namespace.
 
 ```js
 function anchorView(state) {
@@ -318,7 +318,7 @@ function anchorView(state) {
 React.render(anchorView({
   href: 'http://facebook.github.io/react/', 
   text: 'React'
-}), document);
+}), document.body);
 ```
 
 **Mithril**
@@ -372,5 +372,11 @@ var node = mercury.create(anchorView({
 }))
 document.body.appendChild(node);
 ```
+
+## Conclusion
+
+As I hoped, being the VDOM implementations so similar, it's straightforward to translate one view system into another.
+This fact opens a new world of possibilities: [this is a demo](/resources/uvdom/demo/views.html) where a `UVDOM`-view system is converted
+into React, Mithril and mercury with two different styles applied (Bootstrap and Pure), check it out.
 
 In the next article I'll talk about Controllers. 
