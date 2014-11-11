@@ -11,26 +11,6 @@ I'll start with a bare model and then I'll add feature after feature trying to e
 
 What follows is **my own interpretation** of React, feel free to criticize and contribute.
 
-## Roadmap
-
-Roughly I foresee these steps:
-
-- **Views**: this post
-    - A bit of history
-    - Implementing a virtual DOM
-    - Implementing views
-- **Controllers**: Part 2
-    - Events
-    - Writing and reading from the DOM
-    - Apps as finite state machines
-    - A unoptimized reimplementation with jQuery
-- **Optimizations**: Part 3
-    - Components
-    - Private state
-    - Methods
-    - Mixins
-    - VDOM diffs and DOM patches
-
 ## A bit of history
 
 History is fundamental to understand why a particular artifact exists, libraries like React don't appear out of the thin air:
