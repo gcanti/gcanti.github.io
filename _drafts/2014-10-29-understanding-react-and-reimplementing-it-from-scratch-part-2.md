@@ -28,7 +28,7 @@ in a browser user inputs are modeled as events, we need to add events and a way 
 
 ## Events
 
-First of all we add the `events` section to `Node` type definition:
+First of all we add an `events` section to the `Node` type definition:
 
 ```js
 type Node = {
@@ -95,18 +95,18 @@ This is the general lifecycle of a view:
 
 - create the HTML (optimizations like DOM diff will be discussed in the next article)
 - retrieve the events
-- insert HTML into the DOM
+- insert the HTML into the DOM
 - attach the events to the DOM
 
 **Unmounting**
 
 - detach the events from the DOM
-- remove the DocumentFragment from the DOM
+- remove the fragment from the DOM
 
-But there is a problem with the attaching / detaching process: views output UVDOM trees and events can be deeply nested in the tree structure. How can I retrieve the events without losing the information about which node they are attached to? I need a deterministic way to traverse the tree and put an identifier (`data-id`) on its nodes. This is a simple algorithm:
+But there is a problem with the attaching / detaching process: views output UVDOM trees and the related events can be deeply nested in the tree structure. How can I retrieve the events without losing the information about which node they are attached to? I need a deterministic way to traverse the tree and put an identifier (`data-id`) on its nodes. This is a simple algorithm:
 
 - the root has `data-id = '.0'`
-- if a node has `data-id = x` then its `i`-th child has `data-id = x + '.' + i`
+- if a node has `data-id = x` then its `i`-th child has `data-id = x + '.' + (i - 1)`
 
 Example:
 
@@ -120,25 +120,44 @@ root        .0
     node    .0.2.1
 ```
 
-Now events can be linked to nodes with a hash `Hooks = object<data-id, object<eventName, eventHandler>>`: 
+Now events can be linked to nodes with a hash `Hooks`
 
 ```
-type Hook = {
-  '.0': {
-    click: handler,
-    ...
+type Hooks = {
+  data-id: {
+    name: 'click',
+    handler: function
   },
   ...
 }
 ```
 
-So we have these building blocks:
+for our view would be: 
+
+```js
+{
+  // the container div has data-id = '.0'
+  // the button is the second child and has data-id = '.0.1'
+  '.0.1': {name: 'click', handler: controller.increment}
+}
+```
+
+For clarity we can split the view lifecycle into these building blocks:
 
 - `addHookId: UVDOM -> UVDOM`: add hooks to a UVDOM
 - `toHTML: UVDOM -> string`: converts a UVDOM to HTML
 - `toHooks: UVDOM -> Hooks`: converts a UVDOM to Hooks
 - `attach: Hooks x Node -> IO DOM`: (side effects) delegates events to the mounting node
 - `detach: Node -> IO DOM`: (side effects) removes the delegated events from the mounted node
+
+**Note**. In React the attribute used to link events is named `data-reactid`, this is the equivalent of our view rendered by React:
+
+```html
+<div data-reactid=".0">
+  <span data-reactid=".0.0">0</span>
+  <button data-reactid=".0.1">Click me!</button>
+</div>
+```
 
 ## Server / Client side rendering
 
@@ -176,11 +195,26 @@ function unmountAtNode(node) {
 }
 ```
 
-[Here](https://gist.github.com/gcanti/7dd8e887df62e6e1830a) you can find a gist with an actual implementation.
+You can check out this [gist](https://gist.github.com/gcanti/7dd8e887df62e6e1830a) for an actual implementation.
 
-## Unmoved mover
+Now you can handle by hand the rendering of the view typing:
 
-This is the minimal reactive system I can think of:
+```js
+var node = document.getElementById('myapp');
+var state = {counter: 0};
+var controller = {
+  increment: function () {
+    // the view want a change!
+  }
+};
+render(view(state, controller), node);
+```
+
+In this case YOU are the reactive engine. Let's build a more automated reactive system.
+
+## A reactive kōan
+
+If we have a simple state like a counter, this is the minimal reactive system I can think of: the state lives in the `transact` function argument (I stole the idea from how erlang handle the state in a gen_server):
 
 ```js
 var node = document.getElementById('myapp');
@@ -192,41 +226,73 @@ var node = document.getElementById('myapp');
       transact({counter: state.counter + 1});
     }
   };
-  render(counter(state, controller), node);
+  render(view(state, controller), node);
 })({counter: 0});
 ```
 
-The state lives in the function argument.
+You can check out the code on [JSFiddle](http://jsfiddle.net/yb3zmubb/). 
+
+What if we must handle a more complex state? Well, what's better in handling states than a state machine?
 
 ## Apps as finite state machines
 
-Now in order to have a reactive system I must handle this cycle:
+In order to have a reactive system we must handle this cycle:
 
 ```
-state ---> render() ----> unmountAtNode() 
-Ʌ                               |
-|                               V
-+--------- change state --------+
+state ---> unmountAtNode() ----> render() 
+Ʌ                                   |
+|                                   V
++-------------- action -------------+
 ```
+
+This is a simple skeleton of a state machine:
 
 ```js
 function App(node, state) {
-  this.node = node;
-  this.transact(state);
-  this.isMounted = true;
+  this.node = node;     // the DOM node where to mount the application
+  this.transact(state); // first state transition
 }
 
 // state transition
+// transact: State -> IO DOM
 App.prototype.transact = function (state) {
-  this.state = state;
-  if (this.isMounted) { // handle server side rendering
-    unmountAtNode(this.node);
-  }
-  render(this.state.toUVDOM(this), this.node);
+  this.state = state;                   // state change
+  unmountAtNode(this.node);             // unmounts the previous state
+  var uvdom = this.state.toUVDOM(this); // retrieve the UVDOM from the current state
+  render(uvdom, this.node);             // mounts the current state
 };
 ```
 
-## A reimplementation with jQuery
+The entire state is contained in the `this.state` property (equivalent to the `atom` concept found in Om).
+
+The general state is defined like this:
+
+```js
+function State(counter /* other arguments...*/) {
+  this.counter = counter;
+}
+
+// every state has a toUVDOM method
+// toUVDOM: App -> UVDOM
+State.prototype.toUVDOM = function (app) {
+  var self = this;
+
+  // build the view state
+  var state = {counter: this.counter};
+  
+  // build the view controller
+  var controller = {
+    increment: function () {
+      app.transact(new State(self.counter + 1));
+    }
+  };
+
+  // returns a UVDOM
+  return view(state, controller);
+};
+```
+
+With this simple skeleton I implemented a (hopefully neat) todomvc, check out the [demo](TODO).
 
 ## Digression: isomorphic view systems
 

@@ -131,6 +131,7 @@ function attach(hooks, node) {
       $(node).on(eventName, '[' + ATTR_NAME + '="' + id + '"]', eventHandler);
     }
   }
+  node.hooks = hooks; // store hooks for unmounting
 }
 
 // detach: Node -> IO DOM
@@ -163,7 +164,6 @@ function render(uvdom, node) {
     node.innerHTML = toHTML(uvdom); // render HTML
   }
   attach(hooks, node);              // attach events to node
-  node.hooks = hooks;               // store hooks for unmounting
 }
 
 // client side unmounting (React.unmountComponentAtNode)
