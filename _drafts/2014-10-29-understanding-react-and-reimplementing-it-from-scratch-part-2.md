@@ -214,16 +214,16 @@ In this case YOU are the reactive engine. Let's build a more automated reactive 
 
 ## A reactive kōan
 
-If we have a simple state like a counter, this is the minimal reactive system I can think of: the state lives in the `transact` function argument (I stole the idea from how erlang handle the state in a gen_server):
+If we have a simple state like a counter, this is the minimal reactive system I can think of: the state lives in the `loop` function argument (I stole the idea from how erlang handle the state in a gen_server):
 
 ```js
 var node = document.getElementById('myapp');
 
-(function transact(state) {
+(function loop(state) {
   unmountAtNode(node);
   var controller = {
     increment: function () {
-      transact({counter: state.counter + 1});
+      loop({counter: state.counter + 1});
     }
   };
   render(view(state, controller), node);
@@ -292,7 +292,7 @@ State.prototype.toUVDOM = function (app) {
 };
 ```
 
-With this simple skeleton I implemented a (hopefully neat) todomvc, check out the [demo](TODO).
+With this simple skeleton I implemented a (hopefully neat) todomvc, check out the [demo](http://jsfiddle.net/u47c821n/).
 
 ## Digression: isomorphic view systems
 
@@ -314,10 +314,10 @@ So "isomorphic JavaScript" is a trivial case of isomorphism where `f` is the ide
 
 ## Conclusion
 
-This implementation works extraordinarily well for (TODO) LOC but there are some problems:
+This implementation works extraordinarily well for 170 LOC but there are some problems:
 
 - no components
-- the DOM is statefull
+- the DOM is statefull so we must tackle:
   - input focus and selection
   - scroll position
   - iframe
