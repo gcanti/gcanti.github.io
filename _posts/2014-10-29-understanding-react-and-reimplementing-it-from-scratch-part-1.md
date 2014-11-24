@@ -5,7 +5,7 @@ title: "Understanding React and reimplementing it from scratch Part 1: Views"
 
 ## Introduction
 
-Pressed by my own [thread](http://www.reddit.com/r/javascript/comments/2jav2q/is_there_any_good_standalone_implementation_of/) on Reddit I started a journey to understand what can be generalized and unified in the different implementations of a React-like library. The best way I know to understand something isn't just to learn how it works but **which problems** it's trying to solve and **why it's designed** that way. 
+Pressed by my own [thread](http://www.reddit.com/r/javascript/comments/2jav2q/is_there_any_good_standalone_implementation_of/) on Reddit I started a journey to understand what can be generalized and unified in the different implementations of a React-like library. The best way I know to understand something isn't just to learn how it works but **which problems** it's trying to solve and **why it's designed** that way.
 
 I'll start with a bare model and then I'll add feature after feature trying to explain the design decisions, pointing when possible to the corresponding implementations in [React](http://facebook.github.io/react/), [Mitrhil](http://lhorie.github.io/mithril/) and [Mercury](https://github.com/Raynos/mercury).
 
@@ -17,10 +17,10 @@ History is fundamental to understand why a particular artifact exists, libraries
 
 > So, the history of React is that we had this awesome way of building front-end on PHP called [XHP]( http://codebeforethehorse.tumblr.com/post/3096387855/an-introduction-to-xhp). We had been using it very successfully on the server for a while and when you moved to JS you were left with bare DOM manipulation which was terrible.
 
-> The idea of React was to port the XHP way of writing interfaces to JS. The three main characteristics are: 
+> The idea of React was to port the XHP way of writing interfaces to JS. The three main characteristics are:
 
-> 1. syntax extension to write XML inside of JS 
-2. components 
+> 1. syntax extension to write XML inside of JS
+2. components
 3. using JS to generate markup (and not a template language)
 
 > The big question that needed to be answered was how do you deal with updates? On the server you just re-render the entire page so you don't have to deal with this. In React, the diff algorithm and lifecycle methods were invented.
@@ -51,7 +51,7 @@ If you want a simple architecture like ReqRes **and** you have performance issue
 
 Let me rephrase it: if you want a simple architecture like ReqRes and you have no performance issues then you could simply end up with the client equivalent of "re-render the entire page":  `innerHTML`.
 
-One goal of the React team was to bring the ReqRes architecture to the client, while diffing and patching is an (awesome) implementation detail (this explains my choice to put them in the "Optimizations" part). 
+One goal of the React team was to bring the ReqRes architecture to the client, while diffing and patching is an (awesome) implementation detail (this explains my choice to put them in the "Optimizations" part).
 
 I had the same goal three years ago when I implemented the internal framework of [madai](http://madai.com/consumer/us/home.html) using ReqRes and a single point of mutability (an idea similar to [om](https://github.com/swannodette/om)). At that time React wasn't there and since we had no performance issues I implemented the re-rendering with an `innerHTML` of the app root to keep things KISS-y. This series of posts is grounded on the experience of these three years.
 
@@ -217,7 +217,7 @@ prints
 
 You obtain flexibility without loss of control:
 
-- you can rely on the expressiveness of JavaScript instead of learning a separate template language 
+- you can rely on the expressiveness of JavaScript instead of learning a separate template language
 - the output of a view is determined by its input
 - you can customize the output simply applying a JSON transformation
 
@@ -225,13 +225,13 @@ You obtain flexibility without loss of control:
 
 **Definition**. A set `System` is *scalable* with respect to a property `P` if (zooming in and) taking any subset `Subsystem` the property `P` holds.
 
-Now take a tree `T`, pick a random node `N` and consider the *downset* of `N`: 
+Now take a tree `T`, pick a random node `N` and consider the *downset* of `N`:
 
 ```js
 downset(N) = { x in T such that x = N or x is a descendant of N }
 ```
 
-It's trivial to prove that `downset(N)` is a tree for all the `N`. So the set of all the downsets of a tree is scalable with respect to the property "be a tree". 
+It's trivial to prove that `downset(N)` is a tree for all the `N`. So the set of all the downsets of a tree is scalable with respect to the property "be a tree".
 
 This is a good property for our case since VDOMs are trees and you can collapse a node (that is collapse its downset) and replace it with a subview. And this leads to the concept of **components like an optimization for humans**: we need componentization since we can't handle the complexity of a deep tree (this explains my choice to put components in the "Optimizations" part).
 
@@ -247,13 +247,13 @@ describe('anchorView', function () {
   it('should return an anchor', function () {
 
     var state = {
-      href: 'http://facebook.github.io/react/', 
+      href: 'http://facebook.github.io/react/',
       text: 'React'
     };
 
     // inject the state
     var actual = anchorView(state);
-    
+
     var expected = {
       tag: 'a',
       attrs: {href: 'http://facebook.github.io/react/'},
@@ -296,7 +296,7 @@ function anchorView(state) {
 }
 
 React.render(anchorView({
-  href: 'http://facebook.github.io/react/', 
+  href: 'http://facebook.github.io/react/',
   text: 'React'
 }), document.body);
 ```
@@ -319,7 +319,7 @@ function anchorView(state) {
 }
 
 m.render(document.body, anchorView({
-  href: 'http://facebook.github.io/react/', 
+  href: 'http://facebook.github.io/react/',
   text: 'React'
 }));
 ```
@@ -333,7 +333,7 @@ var VirtualText = require('vtree/vtext');
 
 function anchorView(state) {
   return new VirtualNode(
-    'a', 
+    'a',
     {href: state.href},
     [
       new VirtualNode(
@@ -347,7 +347,7 @@ function anchorView(state) {
 
 // mercury.create returns a DOM node
 var node = mercury.create(anchorView({
-  href: 'http://facebook.github.io/react/', 
+  href: 'http://facebook.github.io/react/',
   text: 'React'
 }))
 document.body.appendChild(node);
@@ -359,4 +359,4 @@ As I hoped, being the VDOM implementations so similar, it's straightforward to t
 This fact opens a new world of possibilities: [this is a demo](/resources/uvdom/demo/views.html) where a `UVDOM`-view system is converted
 into React, Mithril and mercury with two different styles applied (Bootstrap and Pure), check it out.
 
-In the next article I'll talk about Controllers. 
+In the [next article](/2014/11/24/understanding-react-and-reimplementing-it-from-scratch-part-2.html) I'll talk about Controllers.
