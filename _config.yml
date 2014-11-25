@@ -29,7 +29,7 @@ projects:
   name: tcomb
   link: https://github.com/gcanti/tcomb
   markdown: "[tcomb](https://github.com/gcanti/tcomb)"
-  description: "Pragmatic runtime type checking for JavaScript."
+  description: "Pragmatic runtime type checking for JavaScript based on set theory."
  tcomb-react:
   name: tcomb-react
   link: https://github.com/gcanti/tcomb-react
