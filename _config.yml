@@ -24,22 +24,12 @@ projects:
   name: tcomb-form
   link: https://github.com/gcanti/tcomb-form
   markdown: "[tcomb](https://github.com/gcanti/tcomb-form)"
-  description: "<b>Domain Driven Forms</b>. Automatically generate form markup from a domain model. Check out the <a href='/resources/tcomb-form/playground/playground.html'>Playground</a>. There is also a <a href='/resources/json-schema-to-tcomb/playground/playground.html'>variant</a> where forms are generated from a JSON Schema."
+  description: "<b>Domain Driven Forms</b>. Automatically generate form markup from a domain model. Check out the <a href='/resources/tcomb-form/playground/playground.html'>Playground</a>."
  tcomb:
   name: tcomb
   link: https://github.com/gcanti/tcomb
   markdown: "[tcomb](https://github.com/gcanti/tcomb)"
   description: "Pragmatic runtime type checking for JavaScript based on set theory."
- tcomb-react:
-  name: tcomb-react
-  link: https://github.com/gcanti/tcomb-react
-  markdown: "[tcomb-react](https://github.com/gcanti/tcomb-react)"
-  description: "Type checking for React components."
- tcomb-react-bootstrap:
-  name: tcomb-react-bootstrap
-  link: https://github.com/gcanti/tcomb-react-bootstrap
-  markdown: "[tcomb-react-bootstrap](https://github.com/gcanti/tcomb-react-bootstrap)"
-  description: "Type checking for <a href='https://github.com/react-bootstrap/react-bootstrap'>react-bootstrap</a>. Check out the <a href='/resources/tcomb-react-bootstrap/playground/playground.html'>Playground</a>."
  tcomb-validation:
   name: tcomb-validation
   link: https://github.com/gcanti/tcomb-validation
