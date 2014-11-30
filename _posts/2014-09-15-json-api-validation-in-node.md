@@ -5,7 +5,7 @@ title: JSON API Validation In Node.js
 
 ## The Problem
 
-In the last post ([JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html)) I've showed a good solution for consuming a JSON API on the client, but what about the server? 
+In the last post ([JSON Deserialization Into An Object Model](/2014/09/12/json-deserialization-into-an-object-model.html)) I've showed a good solution for consuming a JSON API on the client, but what about the server?
 
 While on the client type checking is a plus (especially in development), on the server the matter is more critical:
 
@@ -13,7 +13,7 @@ While on the client type checking is a plus (especially in development), on the 
 - when requests are bad, you should respond with **meaningful error messages** to help your API users
 - you must **write and maintain** extensive api documentation
 
-In this post I'll show you how this work can be done in **a few lines of code and with the bonus of providing a contract to your API users**, with the help of [tcomb-validation](https://github.com/gcanti/tcomb-validation). 
+In this post I'll show you how this work can be done in **a few lines of code and with the bonus of providing a contract to your API users**, with the help of [tcomb-validation](https://github.com/gcanti/tcomb-validation).
 
 tcomb-validation is a a general purpose JavaScript validation library based on [type combinators](https://github.com/gcanti/tcomb).
 
@@ -48,7 +48,7 @@ Let's write its domain model:
 
 var t = require('tcomb');
 
-// a subtype is a pair (type, predicate) 
+// a subtype is a pair (type, predicate)
 // where predicate is a function with signature (x) -> boolean
 var Password = t.subtype(t.Str, function (s) {
   return s.length >= 6;
@@ -92,10 +92,10 @@ var domain =  require('./domain');
 
 app.post('/signup', function (req, res) {
   var input = JSON.parse(req.body.input);
-  
+
   // one-liner validation
   var result = t.validate(input, domain.SignUpInput);
-  
+
   if (result.isValid()) {
 
     // ..your logic here..
@@ -128,15 +128,4 @@ minimal JavaScript client.
 ## Reference
 
 For a reference of the tcomb-validation library see [here](https://github.com/gcanti/tcomb-validation) on GitHub.
-
-## Demo
-
-You can find a demo of these concepts [here](https://github.com/gcanti/demo-json-api-validation-in-nodejs) on GitHub. The demo
-contains:
-
-- the `domain.js` file shared among server and client
-- an express app implementing the SignUp API
-- a simple HTML client implementing auto client side validation based on `domain.js`
-
-
 
