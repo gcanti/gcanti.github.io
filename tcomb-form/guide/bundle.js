@@ -401,6 +401,56 @@ render('33', t.list(Car), {
 
 // ===============================================
 
+var cx = require('react/lib/cx');
+
+function search(locals) {
+
+  var formGroupClasses = {
+    'form-group': true,
+    'has-feedback': true, // required for the icon
+    'has-error': locals.hasError // add 'has-error' class if tcomb-form says there is an error
+  };
+
+  return (
+    React.createElement("div", {className: cx(formGroupClasses)},
+
+      /* add a label if specified */
+      locals.label ? React.createElement("label", {className: "control-label"}, locals.label) : null,
+
+      React.createElement("input", {
+        disabled: locals.disabled,
+        className: "form-control",
+        name: locals.name,
+        placeholder: locals.placeholder,
+        onChange: locals.onChange,
+        style: {'borderRadius': '20px'},
+        type: locals.type,
+        value: locals.value}),
+      /* add a search icon */
+      React.createElement("span", {className: "glyphicon glyphicon-search form-control-feedback"}),
+
+      /* add an error if specified */
+      locals.error ? React.createElement("span", {class: "help-block error-block"}, locals.error) : null,
+
+      /* add an help if specified */
+      locals.help ? React.createElement("span", {class: "help-block"}, locals.help) : null
+
+    )
+  );
+}
+
+var Search = t.struct({
+  search: t.Str
+});
+
+render('34', Search, {
+  templates: {
+    textbox: search
+  }
+});
+
+// ===============================================
+
 var themeSelector = document.getElementById('themeSelector');
 var theme = document.getElementById('theme');
 themeSelector.onchange = function () {
@@ -410,7 +460,7 @@ themeSelector.onchange = function () {
 
 
 
-},{"../../.":2,"react":"react"}],2:[function(require,module,exports){
+},{"../../.":2,"react":"react","react/lib/cx":17}],2:[function(require,module,exports){
 var t = require('./lib');
 
 // plug bootstrap style

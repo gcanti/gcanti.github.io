@@ -400,6 +400,56 @@ render('33', t.list(Car), {
 
 // ===============================================
 
+var cx = require('react/lib/cx');
+
+function search(locals) {
+
+  var formGroupClasses = {
+    'form-group': true,
+    'has-feedback': true, // required for the icon
+    'has-error': locals.hasError // add 'has-error' class if tcomb-form says there is an error
+  };
+
+  return (
+    <div className={cx(formGroupClasses)}>
+
+      {/* add a label if specified */}
+      {locals.label ? <label className="control-label">{locals.label}</label> : null}
+
+      <input
+        disabled={locals.disabled}
+        className="form-control"
+        name={locals.name}
+        placeholder={locals.placeholder}
+        onChange={locals.onChange}
+        style={{'borderRadius': '20px'}}
+        type={locals.type}
+        value={locals.value}/>
+      {/* add a search icon */}
+      <span className="glyphicon glyphicon-search form-control-feedback"></span>
+
+      {/* add an error if specified */}
+      {locals.error ? <span class="help-block error-block">{locals.error}</span> : null}
+
+      {/* add an help if specified */}
+      {locals.help ? <span class="help-block">{locals.help}</span> : null}
+
+    </div>
+  );
+}
+
+var Search = t.struct({
+  search: t.Str
+});
+
+render('34', Search, {
+  templates: {
+    textbox: search
+  }
+});
+
+// ===============================================
+
 var themeSelector = document.getElementById('themeSelector');
 var theme = document.getElementById('theme');
 themeSelector.onchange = function () {

@@ -89,6 +89,15 @@
                 </li>
               </ul>
             </li>
+            <li>Customizations
+              <ul>
+                  <li><a href="#templates">Templates</a></li>
+                  <li><a href="#templates-addons">Templates addons</a></li>
+                  <li><a href="#transformers">Transformers</a></li>
+                  <li><a href="#inputs">Inputs</a></li>
+                  <li><a href="#config">General configuration</a></li>
+              </ul>
+            </li>
           <ul>
         </div>
         <div class="col-sm-8">
@@ -800,6 +809,107 @@
             <pre id="v33" class="value"></pre>
           </div>
 
+          <h1>Customizations</h1>
+
+          <a name="templates"><h2>Templates</h2></a>
+
+          <p>To customize the "skin" of tcomb-form you have to write a <em>template</em>. A template is simply a function with the following signature:</p>
+          <pre><code>function(locals) -> UVDOM | ReactElement</code></pre>
+          <p>where <code>locals</code> is an object contaning the "recipe" for rendering the input and is built by tcomb-form for you and. The returned value can be a <a href="https://github.com/gcanti/uvdom">UVDOM</a> or a ReactElement.</p>
+          <p>Let's build a template for a search textbox styled with Bootstrap. tcomb-form will pass to your template the following recipe (you can find all the recipes in <code>lib/protocols/theme.js</code>):</p>
+          <pre><code>
+var Textbox = struct({
+  disabled: maybe(Bool),    // the textbox should be disabled
+  error: maybe(Label),      // the textbox should show an error if hasError = true
+  hasError: maybe(Bool),    // if true the textbox should show an error state
+                            // to the user and a message if specified
+  help: maybe(Label),       // the textbox should show an help message
+  label: maybe(Label),      // the textbox should show a label
+  name: Str,                // the textbox should use this as name attribute
+  onChange: Func,           // when the value of the textbox changes, should call this
+                            // function with the changed value
+  placeholder: maybe(Str),  // the textbox should show a plceholder
+  type: TypeAttr,           // the textbox should use this as type attribute
+  value: Any                // the textbox should use this as value attribute
+}, 'Textbox');
+          </code></pre>
+
+          <p>Writing the custom template with JSX:</p>
+
+          <pre><code>
+var cx = require('react/lib/cx');
+
+// the custom template
+function search(locals) {
+
+  var formGroupClasses = {
+    'form-group': true,
+    'has-feedback': true, // required for the icon
+    'has-error': locals.hasError // add 'has-error' class
+                                 // if tcomb-form says there is an error
+  };
+
+  return (
+    &lt;div className={cx(formGroupClasses)}&gt;
+
+      {/* add a label if specified */}
+      {locals.label ? &lt;label className="control-label"&gt;{locals.label}&lt;/label&gt; : null}
+
+      &lt;input
+        disabled={locals.disabled}
+        className="form-control"
+        name={locals.name}
+        placeholder={locals.placeholder}
+        onChange={locals.onChange}
+        style={{'border-radius': '20px'}}
+        type={locals.type}
+        value={locals.value}/&gt;
+
+      {/* add a search icon */}
+      &lt;span className="glyphicon glyphicon-search form-control-feedback"&gt;&lt;/span&gt;
+
+      {/* add an error if specified */}
+      {locals.error ? &lt;span class="help-block error-block"&gt;{locals.error}&lt;/span&gt; : null}
+
+      {/* add an help if specified */}
+      {locals.help ? &lt;span class="help-block"&gt;{locals.help}&lt;/span&gt; : null}
+
+    &lt;/div&gt;
+  );
+}
+
+var Search = t.struct({
+  search: t.Str
+});
+
+var Form = t.form.create(Search, {
+  templates: {
+    textbox: search // override the default template for the textboxes
+  }
+});
+          </code></pre>
+
+          <p><b>Output</b>:</p>
+          <div class="preview">
+            <div id="p34" class="form"></div>
+            <pre id="v34" class="value"></pre>
+          </div>
+
+          <a name="templates-addons"><h2>Templates addons</h2></a>
+
+          <p>Coming soon.</p>
+
+          <a name="transformers"><h2>Transformers</h2></a>
+
+          <p>Coming soon.</p>
+
+          <a name="inputs"><h2>Inputs</h2></a>
+
+          <p>Coming soon.</p>
+
+          <a name="config"><h2>General configuration</h2></a>
+
+          <p>Coming soon.</p>
 
         </div>
       </div>
