@@ -14,17 +14,15 @@ baseurl: /
 about: "<a href='/about.html'>about me</a>"
 blog: "<a href='/'>blog</a>"
 projects_list:
+ - tcomb-form
  - tcomb
  - tcomb-validation
- - tcomb-form
- - tcomb-react
- - tcomb-react-bootstrap
 projects:
  tcomb-form:
   name: tcomb-form
-  link: https://github.com/gcanti/tcomb-form
-  markdown: "[tcomb](https://github.com/gcanti/tcomb-form)"
-  description: "<b>Domain Driven Forms</b>. Automatically generate form markup from a domain model. Check out the <a href='/resources/tcomb-form/playground/playground.html'>Playground</a>."
+  link: https://gcanti.github.io/tcomb-form
+  markdown: "[tcomb-form](https://gcanti.github.io/tcomb-form)"
+  description: "React.js powered UI library for developing forms writing less code."
  tcomb:
   name: tcomb
   link: https://github.com/gcanti/tcomb
