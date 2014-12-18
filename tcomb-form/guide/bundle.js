@@ -411,6 +411,13 @@ function search(locals) {
     'has-error': locals.hasError // add 'has-error' class if tcomb-form says there is an error
   };
 
+  var config = locals.config || {};
+  var style = {
+    borderRadius: '20px',
+    color: config.color,
+    backgroundColor: config.backgroundColor
+  };
+
   return (
     React.createElement("div", {className: cx(formGroupClasses)},
 
@@ -423,17 +430,17 @@ function search(locals) {
         name: locals.name,
         placeholder: locals.placeholder,
         onChange: locals.onChange,
-        style: {'borderRadius': '20px'},
+        style: style,
         type: locals.type,
         value: locals.value}),
       /* add a search icon */
       React.createElement("span", {className: "glyphicon glyphicon-search form-control-feedback"}),
 
       /* add an error if specified */
-      locals.error ? React.createElement("span", {class: "help-block error-block"}, locals.error) : null,
+      locals.error ? React.createElement("span", {className: "help-block error-block"}, locals.error) : null,
 
       /* add an help if specified */
-      locals.help ? React.createElement("span", {class: "help-block"}, locals.help) : null
+      locals.help ? React.createElement("span", {className: "help-block"}, locals.help) : null
 
     )
   );
@@ -450,6 +457,60 @@ render('34', Search, {
 });
 
 // ===============================================
+
+render('35', Search, {
+  templates: {
+    textbox: search
+  },
+  fields: {
+    search: {
+      // custom configuration
+      config: {
+        color: '#FFA000',
+        backgroundColor: '#FFECB3'
+      }
+    }
+  }
+});
+
+// ===============================================
+
+var Search2 = t.struct({
+  search: t.list(t.Str)
+});
+
+render('36', Search2, {
+});
+
+// ===============================================
+
+var listTransformer = {
+  format: function (value) {
+    return value ? value.join(' ') : null;
+  },
+  parse: function (value) {
+    return value ? value.split(' ') : [];
+  }
+};
+
+render('37', Search2, {
+  templates: {
+    textbox: search
+  },
+  fields: {
+    search: {
+      factory: t.form.textbox,
+      transformer: listTransformer,
+      help: 'Keywords are separated by spaces'
+    }
+  },
+  value: {
+    search: ['climbing', 'yosemite']
+  }
+});
+
+// ===============================================
+
 
 var themeSelector = document.getElementById('themeSelector');
 var theme = document.getElementById('theme');
@@ -1329,8 +1390,8 @@ SelectOption.dispatch = function (x) {
 var TypeAttr = t.enums.of('textarea hidden text password color date datetime datetime-local email month number range search tel time url week', 'TypeAttr');
 
 var Transformer = struct({
-  format: Func,
-  parse: Func
+  format: Func, // from value to string
+  parse: Func   // from string to value
 }, 'Transformer');
 
 var Textbox = struct({
@@ -1496,16 +1557,16 @@ var TypeAttr = t.enums.of('textarea hidden text password color date datetime dat
 
 var Textbox = struct({
   config: maybe(Obj),
-  disabled: maybe(Bool),
-  error: maybe(Label),
-  hasError: maybe(Bool),
-  help: maybe(Label),
-  label: maybe(Label),
-  name: Str,
-  onChange: Func,
-  placeholder: maybe(Str),
-  type: TypeAttr,
-  value: Any
+  disabled: maybe(Bool),    // should be disabled
+  error: maybe(Label),      // should show an error
+  hasError: maybe(Bool),    // if true should show an error state
+  help: maybe(Label),       // should show an help message
+  label: maybe(Label),      // should show a label
+  name: Str,                // should use this as name attribute
+  onChange: Func,           // should call this function with the changed value
+  placeholder: maybe(Str),  // should show a placeholder
+  type: TypeAttr,           // should use this as type attribute
+  value: Any                // should use this as value attribute
 }, 'Textbox');
 
 var Checkbox = struct({

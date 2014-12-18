@@ -410,6 +410,13 @@ function search(locals) {
     'has-error': locals.hasError // add 'has-error' class if tcomb-form says there is an error
   };
 
+  var config = locals.config || {};
+  var style = {
+    borderRadius: '20px',
+    color: config.color,
+    backgroundColor: config.backgroundColor
+  };
+
   return (
     <div className={cx(formGroupClasses)}>
 
@@ -422,17 +429,17 @@ function search(locals) {
         name={locals.name}
         placeholder={locals.placeholder}
         onChange={locals.onChange}
-        style={{'borderRadius': '20px'}}
+        style={style}
         type={locals.type}
         value={locals.value}/>
       {/* add a search icon */}
       <span className="glyphicon glyphicon-search form-control-feedback"></span>
 
       {/* add an error if specified */}
-      {locals.error ? <span class="help-block error-block">{locals.error}</span> : null}
+      {locals.error ? <span className="help-block error-block">{locals.error}</span> : null}
 
       {/* add an help if specified */}
-      {locals.help ? <span class="help-block">{locals.help}</span> : null}
+      {locals.help ? <span className="help-block">{locals.help}</span> : null}
 
     </div>
   );
@@ -449,6 +456,60 @@ render('34', Search, {
 });
 
 // ===============================================
+
+render('35', Search, {
+  templates: {
+    textbox: search
+  },
+  fields: {
+    search: {
+      // custom configuration
+      config: {
+        color: '#FFA000',
+        backgroundColor: '#FFECB3'
+      }
+    }
+  }
+});
+
+// ===============================================
+
+var Search2 = t.struct({
+  search: t.list(t.Str)
+});
+
+render('36', Search2, {
+});
+
+// ===============================================
+
+var listTransformer = {
+  format: function (value) {
+    return value ? value.join(' ') : null;
+  },
+  parse: function (value) {
+    return value ? value.split(' ') : [];
+  }
+};
+
+render('37', Search2, {
+  templates: {
+    textbox: search
+  },
+  fields: {
+    search: {
+      factory: t.form.textbox,
+      transformer: listTransformer,
+      help: 'Keywords are separated by spaces'
+    }
+  },
+  value: {
+    search: ['climbing', 'yosemite']
+  }
+});
+
+// ===============================================
+
 
 var themeSelector = document.getElementById('themeSelector');
 var theme = document.getElementById('theme');
