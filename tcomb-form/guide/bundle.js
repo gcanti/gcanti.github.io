@@ -511,6 +511,144 @@ render('37', Search2, {
 
 // ===============================================
 
+function searchFactory(opts, ctx) {
+
+  opts = opts || {};
+
+  // handling label
+  var label = opts.label;
+  if (!label && ctx.auto === 'labels') {
+    // if labels are auto generated, get the default label
+    label = ctx.getDefaultLabel();
+  }
+
+  // handling placeholder
+  var placeholder = null;
+  // labels have higher priority
+  if (!label && ctx.auto !== 'none') {
+    placeholder = !t.Nil.is(opts.placeholder) ? opts.placeholder : ctx.getDefaultLabel();
+  }
+
+  // handling name attribute
+  var name = opts.name || ctx.getDefaultName();
+
+  // handling value
+  var value = !t.Nil.is(opts.value) ? opts.value : !t.Nil.is(ctx.value) ? ctx.value : null;
+
+  //
+  // return a ReactClass
+  //
+
+  return React.createClass({
+
+    getInitialState: function () {
+      return {
+        hasError: !!opts.hasError,
+        value: value
+      };
+    },
+
+    onChange: function (evt) {
+      var value = evt.target.value || null;
+
+      // handling transformation
+      value = listTransformer.parse(value);
+
+      // notify the parent components that there is a change
+      if (this.props.onChange) {
+        this.props.onChange(value);
+      }
+
+      // re-render
+      this.setState({value: value});
+    },
+
+    getValue: function () {
+
+      // ctx.report.type contains the type specified in the api call
+      var result = t.validate(this.state.value, ctx.report.type);
+      this.setState({
+        hasError: !result.isValid(),
+        value: result.value
+      });
+
+      // return a ResultValidation instance
+      return result;
+    },
+
+    render: function () {
+
+      // handling transformation
+      var value = listTransformer.format(this.state.value);
+
+      // handling errors
+      var error = opts.error;
+      if (this.state.hasError) {
+        // show the error message only if there is an error
+        error = t.Func.is(error) ? error(this.state.value) : error
+      }
+
+      return search({
+        config: opts.config,
+        disabled: opts.disabled,
+        error: error,
+        hasError: this.state.hasError,
+        help: opts.help,
+        label: label,
+        name: name,
+        onChange: this.onChange,
+        placeholder: placeholder,
+        type: 'search',
+        value: value
+      });
+
+    }
+  });
+
+}
+
+render('38', Search2, {
+  fields: {
+    search: {
+      factory: searchFactory
+    }
+  },
+  value: {
+    search: ['climbing', 'yosemite']
+  }
+});
+
+// ===============================================
+
+// if notifyMe === true then email is required
+var structPredicate = function (person) {
+  return person.notifyMe === false || (!t.Nil.is(person.email));
+};
+
+var Person7 = t.subtype(t.struct({
+  name: t.Str,
+  notifyMe: t.Bool,
+  email: t.maybe(t.Str)
+}), structPredicate);
+
+render('39', Person7, {
+  error: 'Insert your email if you want to be notified'
+});
+
+// ===============================================
+
+// at least two tags
+var listPredicate = function (tags) {
+  return tags.length >= 2;
+};
+
+var Tags2 = t.subtype(t.list(t.Str), listPredicate);
+
+render('40', Tags2, {
+  error: 'Insert at least two tags'
+});
+
+// ===============================================
 
 var themeSelector = document.getElementById('themeSelector');
 var theme = document.getElementById('theme');

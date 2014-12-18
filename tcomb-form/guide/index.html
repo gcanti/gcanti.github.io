@@ -98,8 +98,11 @@
                   <li><a href="#config">General configuration</a></li>
               </ul>
             </li>
-            <li>Advanced form management (coming soon)
-
+            <li>Advanced form management
+              <ul>
+                  <li><a href="#struct-subtypes">Struct subtypes</a></li>
+                  <li><a href="#list-subtypes">List subtypes</a></li>
+              </ul>
             </li>
           <ul>
         </div>
@@ -1066,15 +1069,218 @@ var Form = t.form.create(Search, {
 
           <a name="custom-inputs"><h2>Custom inputs</h2></a>
 
-          <p>Coming soon.</p>
+          <p>You can wrap the previous work in a custom input. A custom input is a function with the following signature:</p>
+          <pre><code>
+function (opts, ctx) -> ReactClass
+          </code></pre>
+          <p>where <code>opts</code> is the object defined in the api call, <code>ctx</code> is an object injected by tcomb-form which helps you to implement your custom input and the ReactClass must have a <code>getValue()</code> method returning a <code>ResultValidation</code> instance (see <a href="https://github.com/gcanti/tcomb-validation">tcomb-validation</a> for a reference):</p>
+
+          <pre><code>
+// custom input definition
+function searchFactory(opts, ctx) {
+
+  opts = opts || {};
+
+  // label
+  var label = opts.label;
+  if (!label && ctx.auto === 'labels') {
+    // if labels are auto generated, get the default label
+    label = ctx.getDefaultLabel();
+  }
+
+  // placeholder
+  var placeholder = null;
+
+  if (!label && ctx.auto !== 'none') {
+    // labels have higher priority
+    placeholder = !t.Nil.is(opts.placeholder) ?
+      opts.placeholder :
+      ctx.getDefaultLabel();
+  }
+
+  // name attribute
+  var name = opts.name || ctx.getDefaultName();
+
+  // value
+  var value = !t.Nil.is(opts.value) ?
+    opts.value : !t.Nil.is(ctx.value) ? // the value could come from the context
+    ctx.value : null;
+
+  //
+  // return a ReactClass
+  //
+
+  return React.createClass({
+
+    getInitialState: function () {
+      return {
+        hasError: !!opts.hasError,
+        value: value
+      };
+    },
+
+    onChange: function (evt) {
+      var value = evt.target.value || null;
+
+      // transformation
+      value = listTransformer.parse(value);
+
+      // notify the parent components that there is a change
+      if (this.props.onChange) {
+        this.props.onChange(value);
+      }
+
+      // re-render
+      this.setState({value: value});
+    },
+
+    getValue: function () {
+
+      // ctx.report.type contains the type specified in the api call
+      var result = t.validate(this.state.value, ctx.report.type);
+      this.setState({
+        hasError: !result.isValid(),
+        value: result.value
+      });
+
+      // return a ResultValidation instance
+      return result;
+    },
+
+    render: function () {
+
+      // transformation
+      var value = listTransformer.format(this.state.value);
+
+      // error
+      var error = opts.error;
+      if (this.state.hasError) {
+        // show the error message only if there is an error
+        // error can be a function
+        error = t.Func.is(error) ? error(this.state.value) : error
+      }
+
+      // using the custom template defined above
+      return search({
+        config: opts.config,
+        disabled: opts.disabled,
+        error: error,
+        hasError: this.state.hasError,
+        help: opts.help,
+        label: label,
+        name: name,
+        onChange: this.onChange,
+        placeholder: placeholder,
+        type: 'search',
+        value: value
+      });
+
+    }
+  });
+
+}
+          </code></pre>
+
+          <p>Now you can call your new custom input using only the <code>factory</code> option:</p>
+
+          <pre><code>
+var Form = t.form.create(Search, {
+  fields: {
+    search: {
+      <b>factory: searchFactory</b>
+    }
+  },
+  value: {
+    search: ['climbing', 'yosemite']
+  }
+});
+          </code></pre>
+
+          <p><b>Output</b>:</p>
+          <div class="preview">
+            <div id="p38" class="form"></div>
+            <pre id="v38" class="value"></pre>
+          </div>
 
           <a name="config"><h2>General configuration</h2></a>
 
-          <p>Coming soon.</p>
+          <p>tcomb-form uses the following default settings:</p>
+          <ul>
+            <li>english as language</li>
+            <li>Bootstrap as theme</li>
+            <li>a default transformer to handle numbers</li>
+          </ul>
+
+          <h3>Change default language</h3>
+          <p>You can change the default language with the <code>config.i18n</code> setting:</p>
+          <pre><code>
+var api = require('tcomb-form/lib/protocols/api');
+
+t.form.config.i18n = new api.I18n({
+  optional: ' (opzionale)',
+  add: 'Nuovo',
+  remove: 'Elimina',
+  up: 'Su',
+  down: 'Giù'
+});
+          </code></pre>
+
+          <h3>Change default theme</h3>
+          <p>You can change the default language with the <code>config.templates</code> setting:</p>
+          <pre><code>
+var t = require('tcomb-form/lib'); // tcomb-form without templates!
+var ionic = require('tcomb-form/lib/templates/ionic');
+
+t.form.config.templates = ionic;
+          </code></pre>
 
           <h1>Advanced form management</h1>
 
-          <p>Coming soon.</p>
+          <a name="struct-subtypes"><h2>Struct subtypes</h2></a>
+          <p>You can use subtypes also with structs:</p>
+          <pre><code>
+// if notifyMe === true then email is required
+var predicate = function (person) {
+  return person.notifyMe === false || (!t.Nil.is(person.email));
+};
+
+var Person = t.struct({
+  name: t.Str,
+  notifyMe: t.Bool,
+  email: t.maybe(t.Str)
+});
+
+var Form = t.form.create(Person, {
+  error: 'Insert your email if you want to be notified'
+});
+          </code></pre>
+
+          <p><b>Output</b>:</p>
+          <div class="preview">
+            <div id="p39" class="form"></div>
+            <pre id="v39" class="value"></pre>
+          </div>
+
+          <a name="list-subtypes"><h2>List subtypes</h2></a>
+          <p>You can use subtypes also with lists:</p>
+          <pre><code>
+// at least two tags
+var predicate = function (tags) {
+  return tags.length >= 2;
+};
+
+var Tags = t.subtype(t.list(t.Str), predicate);
+
+var Form = t.form.create(Tags, {
+  error: 'Insert at least two tags'
+});
+          </code></pre>
+
+          <p><b>Output</b>:</p>
+          <div class="preview">
+            <div id="p40" class="form"></div>
+            <pre id="v40" class="value"></pre>
+          </div>
 
         </div>
       </div>
