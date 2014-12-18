@@ -1244,11 +1244,11 @@ var predicate = function (person) {
   return person.notifyMe === false || (!t.Nil.is(person.email));
 };
 
-var Person = t.struct({
+var Person = t.subtype(t.struct({
   name: t.Str,
   notifyMe: t.Bool,
   email: t.maybe(t.Str)
-});
+}), predicate);
 
 var Form = t.form.create(Person, {
   error: 'Insert your email if you want to be notified'
