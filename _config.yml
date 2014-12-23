@@ -25,8 +25,8 @@ projects:
   description: "React.js powered UI library for developing forms writing less code."
  tcomb:
   name: tcomb
-  link: https://github.com/gcanti/tcomb
-  markdown: "[tcomb](https://github.com/gcanti/tcomb)"
+  link: https://gcanti.github.io/tcomb
+  markdown: "[tcomb](https://gcanti.github.io/tcomb)"
   description: "Pragmatic runtime type checking for JavaScript based on set theory."
  tcomb-validation:
   name: tcomb-validation
