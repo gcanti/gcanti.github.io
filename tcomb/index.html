@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>tcomb v0.4</title>
+    <title>tcomb.js v0.4</title>
+    <meta name="description" content="Domain driven design and type checking for JavaScript">
+    <meta name="keywords" content="JavaScript Domain Driven design type checking">
     <!--[if lt IE 9]>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.0.5/es5-shim.min.js"></script>
@@ -49,16 +51,13 @@
       width: 340px;
       margin: auto;
     }
-    a {
-      color: #c3292c;
-    }
     </style>
   </head>
   <body>
     <div class="landing-header">
       <div class="container">
-        <p class="lead">tcomb v0.4</p>
-        <h1>Pragmatic runtime type checking for JavaScript <br/> based on set theory.</h1>
+        <p class="lead">tcomb.js v0.4</p>
+        <h1>Domain driven design and <br/>type checking for JavaScript.</h1>
         <p class="lead">"Si vis pacem, para bellum"<br/>(Vegetius 5th century)</p>
       </div>
     </div>
@@ -84,20 +83,19 @@
       <div class="row">
         <div class="col-md-4">
           <h2 class="text-center">The idea</h2>
-          <p>What's a type? In tcomb a type is a function <code>T</code> such that:</p>
+          <p>What's a type? In tcomb <b>a type is represented by a function</b> T such that:</p>
           <ol>
-            <li><p>has signature <code>T(value, ?mut)</code> where <code>value</code> depends on the nature of <code>T</code> and the optional boolean <code>mut</code> makes the instance mutable (default <code>false</code>)</p></li>
-            <li><p>is idempotent, that is <code>T(T(value)) = T(value)</code></p></li>
-            <li><p>owns a static function <code>T.is(x)</code> returning <code>true</code> if <code>x</code> is an instance of <code>T</code></p></li>
+            <li><p>has signature T(value, ?mut) where value depends on the nature of T and the optional boolean mut makes the instance mutable (default false)</p></li>
+            <li><p>is idempotent, that is T(T(value)) = T(value)</p></li>
+            <li><p>owns a static function T.is(x) returning true if x is an instance of T</p></li>
           </ol>
-          <p><b>Note</b>: 2. implies that <code>T</code> can be used as a default JSON decoder</p>
         </div>
         <div class="col-md-4">
           <h2 class="text-center">Articles</h2>
+          <p>tcomb.js is based on <b>set theory</b> and <b>type combinators</b>:</p>
           <ul>
             <li><a href="http://gcanti.github.io/2014/09/29/javascript-types-and-sets.html">JavaScript, Types and Sets Part 1</a></li>
             <li><a href="https://gcanti.github.io/2014/10/07/javascript-types-and-sets-part-II.html">JavaScript, Types and Sets Part 2</a></li>
-            <li><a href="http://gcanti.github.io/2014/08/12/what-if-your-domain-model-could-validate-the-ui-for-free.html">What if your domain model could validate the UI for free?</a></li>
             <li><a href="http://gcanti.github.io/2014/09/12/json-deserialization-into-an-object-model.html">JSON Deserialization Into An Object Model</a></li>
             <li><a href="http://gcanti.github.io/2014/09/15/json-api-validation-in-node.html">JSON API Validation In Node.js</a></li>
           </ul>
@@ -109,6 +107,7 @@
             <li>easy debugging</li>
             <li>instances are <b>immutables</b> by default</li>
             <li>encodes/decodes domain models to/from JSON for free</li>
+            <li><b>type reflection at runtime</b></li>
           </ul>
           <p>The library provides a built-in <code>assert</code> function, if an assert fails the <b>debugger kicks in</b> so you can inspect the stack and quickly find out what's wrong.</p>
         </div>
