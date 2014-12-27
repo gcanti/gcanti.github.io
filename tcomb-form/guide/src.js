@@ -4,7 +4,7 @@ var React = require('react');
 var t = require('../../.');
 
 // helper function
-function render(i, type, opts) {
+function render(i, type, opts, onChange) {
 
   var formPreview = document.getElementById('p' + i);
   var Form = t.form.create(type, opts);
@@ -20,11 +20,17 @@ function render(i, type, opts) {
       }
     },
 
+    onChange: function (rawValue) {
+      var valuePreview = document.getElementById('v' + i)
+      valuePreview.style.display = 'block';
+      valuePreview.innerHTML += JSON.stringify(rawValue, null, 2) + '\n';
+    },
+
     render: function () {
       return (
         React.DOM.div(null,
-          React.createFactory(Form)({ref: 'form'}),
-          React.DOM.button({
+          React.createFactory(Form)({ref: 'form', onChange: onChange ? this.onChange : null}),
+          onChange ? null : React.DOM.button({
             onClick: this.onClick,
             className: 'btn btn-primary'
           }, 'Click me')
@@ -428,7 +434,9 @@ function search(locals) {
         className="form-control"
         name={locals.name}
         placeholder={locals.placeholder}
-        onChange={locals.onChange}
+        onChange={function (evt) {
+          locals.onChange(evt.target.value);
+        }}
         style={style}
         type={locals.type}
         value={locals.value}/>
@@ -529,7 +537,7 @@ function searchFactory(opts, ctx) {
   }
 
   // handling name attribute
-  var name = opts.name || ctx.getDefaultName();
+  var name = opts.name || ctx.name;
 
   // handling value
   var value = !t.Nil.is(opts.value) ? opts.value : !t.Nil.is(ctx.value) ? ctx.value : null;
@@ -547,13 +555,12 @@ function searchFactory(opts, ctx) {
       };
     },
 
-    onChange: function (evt) {
-      var value = evt.target.value || null;
+    onChange: function (value) {
 
-      // handling transformation
+      // parsing
       value = listTransformer.parse(value);
 
-      // notify the parent components that there is a change
+      // notify change to parent
       if (this.props.onChange) {
         this.props.onChange(value);
       }
@@ -577,7 +584,7 @@ function searchFactory(opts, ctx) {
 
     render: function () {
 
-      // handling transformation
+      // formatting
       var value = listTransformer.format(this.state.value);
 
       // handling errors
@@ -646,6 +653,48 @@ var Tags2 = t.subtype(t.list(t.Str), listPredicate);
 render('40', Tags2, {
   error: 'Insert at least two tags'
 });
+
+// ===============================================
+
+render('41', Textbox, {
+  fields: {
+    mytext: {
+      config: {
+        // you can use strings or JSX
+        addonBefore: React.DOM.i(null, 'before'),
+        addonAfter: React.DOM.i(null, 'after'),
+      }
+    }
+  }
+});
+
+// ===============================================
+
+render('42', Textbox, {
+  fields: {
+    mytext: {
+      config: {
+        size: 'lg'
+      }
+    }
+  }
+});
+
+// ===============================================
+
+render('43', Person7, {
+  auto: 'labels',
+  config: {
+    horizontal: {
+      md: [3, 9],
+      sm: [6, 6]
+    }
+  }
+});
+
+// ===============================================
+
+render('44', Person7, {}, true);
 
 // ===============================================
 
