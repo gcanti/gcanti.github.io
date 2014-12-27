@@ -31,17 +31,23 @@
         <div class="col-sm-4">
           <h1>Index</h1>
           <ul class="list-unstyled">
-            <li>Get started
+            <li><b>Get started</b>
               <ul>
-                  <li><a href="#install">Installing tcomb</a></li>
+                  <li><a href="#setup">Setup</a></li>
                   <li><a href="#idea">The idea</a></li>
-                  <li><a href="#irreducibles">Irreducibles types</a></li>
+                  <li><a href="#irreducibles">Irreducibles types</a>
+                    <ul>
+                      <li>Type checking with the <code>is</code> function</li>
+                      <li>Asserts</li>
+                      <li>Adding safety to legacy code</li>
+                    </ul>
+                  </li>
                   <li><a href="#legacy">Adding safety to legacy code</a></li>
                   <li><a href="#new-irreducibles">Defining new irreducible types</a></li>
                   <li><a href="#meta">The meta object</a></li>
               </ul>
             </li>
-            <li>Type combinators
+            <li><b>Type combinators</b>
               <ul>
                   <li><a href="#subtype">subtype</a></li>
                   <li><a href="#enums">enums</a></li>
@@ -55,10 +61,44 @@
                   <li><a href="#tuple">tuple</a></li>
                   <li><a href="#list">list</a></li>
                   <li><a href="#dict">dict</a></li>
-                  <li><a href="#union">union</a></li>
+                  <li><a href="#union">union</a>
+                    <ul>
+                      <li>The dispatch function</li>
+                    </ul>
+                  </li>
                   <li><a href="#maybe">maybe</a></li>
-                  <li><a href="#func">func</a></li>
-                  <li><a href="#update">Updating immutable instances</a> (coming soon)</li>
+                  <li><a href="#func">func</a>
+                    <ul>
+                      <li>The <code>of()</code> function</li>
+                      <li>The <code>is()</code> function</li>
+                      <li>Rules</li>
+                    </ul>
+                  </li>
+                  <li><a href="#update">Updating immutable instances</a>
+                    <ul>
+                      <li>Removing a value form a dict</li>
+                      <li>Swapping two list elements</li>
+                      <li>Adding other commands</li>
+                    </ul>
+                  </li>
+              </ul>
+            </li>
+            <li><b>API</b>
+              <ul>
+                <li><a href="#options">options</a>
+                    <ul>
+                      <li>onFail</li>
+                    </ul>
+                </li>
+                <li><a href="#util">util</a>
+                    <ul>
+                      <li>format</li>
+                      <li>getKind</li>
+                      <li>getFunctionName</li>
+                      <li>getName</li>
+                      <li>mixin</li>
+                    </ul>
+                </li>
               </ul>
             </li>
           <ul>
@@ -67,7 +107,7 @@
 
           <h1>Get started</h1>
 
-          <a name="install"><h2>Setup</h2></a>
+          <a name="setup"><h2>Setup</h2></a>
 
           <p>Node</p>
           <pre><code>
@@ -79,11 +119,11 @@ bower install tcomb
           </code></pre>
 
           <a name="idea"><h2>The idea</h2></a>
-          <p>What's a type? In tcomb <b>a type is represented by a function</b> T such that:</p>
+          <p>What's a type? In tcomb <b>a type is represented by a function</b> <code>T</code> such that:</p>
           <ol>
-            <li><p>has signature T(value, ?mut) where value depends on the nature of T and the optional boolean mut makes the instance mutable (default false)</p></li>
-            <li><p>is idempotent, that is T(T(value)) = T(value)</p></li>
-            <li><p>owns a static function T.is(x) returning true if x is an instance of T</p></li>
+            <li><p>has signature <code>T(value, mut?)</code> where value depends on the nature of <code>T</code> and the optional boolean mut makes the instance mutable (default <code>false</code>)</p></li>
+            <li><p>is idempotent, that is <code>T(T(value)) = T(value)</code></p></li>
+            <li><p>owns a static function <code>T.is(x)</code> returning <code>true</code> if <code>x</code> is an instance of <code>T</code></p></li>
           </ol>
 
           <a name="irreducibles"><h2>Irreducibles types</h2></a>
@@ -124,11 +164,22 @@ t.Num.is(1);          // => true
           </code></pre>
 
           <h3>Asserts</h3>
-          <p>tcomb provides a built-in <code>t.assert</code> function, if an assert fails the <b>debugger kicks in</b>
+          <p>tcomb provides a built-in <code>t.assert(guard, message?, ...values?)</code> function, if an assert fails the <b>debugger kicks in</b>
           so you can inspect the stack and quickly find out what's wrong.</p>
           <pre><code>
 assert(Str.is('a string')); // => ok
-assert(Str.is(1)); // => debugger kicks in pointing here
+assert(Str.is(1)); // => fail!
+          </code></pre>
+          <p>If <code>guard !== true</code> the debugger kicks in.</p>
+          <ul>
+            <li><code>guard: Bool</code> is a boolean condition</li>
+            <li><code>message: ?Str</code> optional string useful for debugging, formatted with <code>values</code> like <a href="http://nodejs.org/api/util.html#util_util_format_format">util.format in Node</a></li>
+          </ul>
+          <pre><code>
+var x = -2;
+var min = 0;
+// outputs "-2 should be greater then 0"
+assert(x > min, '%s should be greater then %s', x, min);
           </code></pre>
           <p>Another way to ensure the correct type is to use types as constructors:</p>
           <pre><code>
@@ -205,7 +256,7 @@ ReactElement.is(&lt;div/&gt;); // => true
           <p><em>Type combinators</em> are the tcomb way to define new composite types from those already defined, that is they <b>combine</b> old types in a new one.</p>
 
           <a name="subtype"><h2>The subtype combinator</h2></a>
-          <p>You can refine a type using the <code>subtype(type, predicate, ?name)</code> combinator where:</p>
+          <p>You can refine a type using the <code>subtype(type, predicate, name?)</code> combinator where:</p>
           <ul>
             <li><code>type: Type</code> is a type already defined</li>
             <li><code>predicate: Func</code> is a predicate</li>
@@ -234,7 +285,7 @@ Positive.is(-1); // => false
           </code></pre>
 
           <a name="enums"><h2>The enums combinator</h2></a>
-          <p>You can define an enum type using the <code>enums(map, ?name)</code> combinator where:</p>
+          <p>You can define an enum type using the <code>enums(map, name?)</code> combinator where:</p>
           <ul>
             <li><code>map: Obj</code> is a hash whose keys are the enums (values are free)</li>
             <li><code>name: ?Str</code> is an optional string useful for debugging purposes</li>
@@ -259,7 +310,7 @@ Country.is('FR'); // => false
 }
           </code></pre>
 
-          <p>If you don't care of values you can use <code>enums.of(keys, ?name)</code> where:</p>
+          <p>If you don't care of values you can use <code>enums.of(keys, name?)</code> where:</p>
           <ul>
             <li><code>keys: Array&lt;Str&gt; | Str</code> is the array of enums or a string where the enums are separated by spaces</li>
             <li><code>name: ?Str</code> is an optional string useful for debugging purposes</li>
@@ -281,7 +332,7 @@ var Country = t.enums({
           </code></pre>
 
           <a name="struct"><h2>The struct combinator</h2></a>
-          <p>You can define a struct type using the <code>struct(props, ?name)</code> combinator where:</p>
+          <p>You can define a struct type using the <code>struct(props, name?)</code> combinator where:</p>
           <ul>
             <li><code>props: Obj</code> is a hash whose keys are the field names and the values are the fields types</li>
             <li><code>name: ?Str</code> is an optional string useful for debugging purposes</li>
@@ -326,7 +377,7 @@ var p = new Point({x: 1, y: 2}, true);
           </code></pre>
 
           <h3>Extending a struct</h3>
-          <p>Every struct constructor owns an <code>extend(mixins, ?name)</code> function where:</p>
+          <p>Every struct constructor owns an <code>extend(mixins, name?)</code> function where:</p>
           <ul>
             <li><code>mixins: Obj | Struct | Array&lt;Obj | Struct&gt;</code> contains the new props</li>
             <li><code>name: ?Str</code> is an optional string useful for debugging purposes</li>
@@ -372,7 +423,7 @@ var Wrong = Point.extend(<b>{x: Num}</b>); // => fail!
           </div>
 
           <a name="tuple"><h2>The tuple combinator</h2></a>
-          <p>You can define a tuple type using the <code>tuple(types, ?name)</code> combinator where:</p>
+          <p>You can define a tuple type using the <code>tuple(types, name?)</code> combinator where:</p>
           <ul>
             <li><code>types: Array&lt;Type&gt;</code> is a list of types</li>
             <li><code>name: ?Str</code> is an optional string useful for debugging purposes</li>
@@ -396,7 +447,7 @@ var area = Area([1, 2]);
           </code></pre>
 
           <a name="list"><h2>The list combinator</h2></a>
-          <p>You can define a list type using the <code>list(type, ?name)</code> combinator where:</p>
+          <p>You can define a list type using the <code>list(type, name?)</code> combinator where:</p>
           <ul>
             <li><code>type: Type</code> is the type of list items</li>
             <li><code>name: ?Str</code> is an optional string useful for debugging purposes</li>
@@ -423,7 +474,7 @@ var path = Path([
           </code></pre>
 
           <a name="dict"><h2>The dict combinator</h2></a>
-          <p>You can define a dictionary type using the <code>dict(domain, codomain, ?name)</code> combinator where:</p>
+          <p>You can define a dictionary type using the <code>dict(domain, codomain, name?)</code> combinator where:</p>
           <ul>
             <li><code>domain: Type</code> is the type of keys</li>
             <li><code>codomain: Type</code> is the type of values</li>
@@ -449,7 +500,7 @@ var tel = Tel({'jack': 4098, 'sape': 4139});
           </code></pre>
 
           <a name="union"><h2>The union combinator</h2></a>
-          <p>You can define a union of types using the <code>union(types, ?name)</code> combinator where:</p>
+          <p>You can define a union of types using the <code>union(types, name?)</code> combinator where:</p>
           <ul>
             <li><code>types: Array&lt;Type&gt;</code> is a list of types</li>
             <li><code>name: ?Str</code> is an optional string useful for debugging purposes</li>
@@ -492,7 +543,7 @@ var key = ReactKey('a');
 
           <a name="maybe"><h2>The maybe combinator</h2></a>
           <p>In tcomb optional values of type <code>T</code> can be represented by <code>union([Nil, T])</code>. Since it's very common to handle optional values, tcomb provide an ad-hoc combinator.</p>
-          <p>You can define a maybe type using the <code>maybe(type, ?name)</code> combinator where:</p>
+          <p>You can define a maybe type using the <code>maybe(type, name?)</code> combinator where:</p>
           <ul>
             <li><code>type: Type</code> is the wrapped type</li>
             <li><code>name: ?Str</code>: is an optional string useful for debugging purposes</li>
@@ -531,7 +582,7 @@ add("Hello");    // Raises error: Invalid `Hello` supplied to `Num`
 add(1, 2);       // Returns: 3
 add(1)(2);       // Returns: 3
           </code></pre>
-          <p>You can define a typed function using the <code>func(domain, codomain, ?name)</code> combinator where:</p>
+          <p>You can define a typed function using the <code>func(domain, codomain, name?)</code> combinator where:</p>
           <ul>
             <li><code>domain: Type | Array&lt;Type&gt;</code> is the type of the function's argument (or list of types of the function's arguments)</li>
             <li><code>codomain: Type</code> is the type of the function's return value</li>
@@ -571,7 +622,7 @@ var C = func([A, B, Str], Num);
 }
           </code></pre>
 
-          <h3>The of(f) function</h3>
+          <h3>The <code>of()</code> function</h3>
           <pre><code>
 func(A, B).of(f);
           </code></pre>
@@ -604,7 +655,7 @@ var add2 = add(2);
 add2(1); // And this returns: 3
           </code></pre>
 
-          <h3>The is(x) function</h3>
+          <h3>The <code>is()</code> function</h3>
           <pre><code>
 func(A, B).is(x);
           </code></pre>
@@ -626,6 +677,108 @@ func([Num, Num], Num).is(func(Num, Num).of(id));        // Returns: false
             <li>The domain and codomain of a typed function's type is checked when the typed function is passed to a function type (such as when used as an argument in another typed function)</li>
           </ol>
 
+          <a name="update"><h2>Updating immutable instances</h2></a>
+          <p>You can update an immutable instance with the <code>update</code> static function</p>
+          <pre><code>
+Type.update(instance, spec)
+          </code></pre>
+          <p>The following commands are compatible with the <a href="http://facebook.github.io/react/docs/update.html">Facebook Immutability Helpers</a>:</p>
+          <ul>
+            <li>$push</li>
+            <li>$unshift</li>
+            <li>$splice</li>
+            <li>$set</li>
+            <li>$apply</li>
+            <li>$merge</li>
+          </ul>
+          <p>Example:</p>
+          <pre><code>
+var p = new Point({x: 1, y: 2});
+
+p = Point.update(p, {x: {'$set': 3}}); // => {x: 3, y: 2}
+          </code></pre>
+
+          <h3>Removing a value form a dict</h3>
+          <pre><code>
+var Type = dict(Str, Num);
+var instance = Type({a: 1, b: 2});
+var updated = Type.update(instance, {$remove: ['a']}); // => {b: 2}
+          </code></pre>
+
+          <h3>Swapping two list elements</h3>
+          <pre><code>
+var Type = list(Num);
+var instance = Type([1, 2, 3, 4]);
+var updated = Type.update(instance, {'$swap': {from: 1, to: 2}}); // => [1, 3, 2, 4]
+          </code></pre>
+
+          <h3>Adding other commands</h3>
+          <p>You can add your custom commands updating the <code>util.update.commands</code> hash.</p>
+
+          <h1>API</h1>
+
+          <a name="options"><h2>Options</h2></a>
+
+          <h3>onFail</h3>
+          <p>The default behaviour when failures occur is to start the debugger:</p>
+          <pre><code>
+var failed = false;
+
+function onFail(message) {
+  if (!failed) {
+    debugger;
+  }
+  failed = true;
+  throw new Error(message);
+}
+          </code></pre>
+          <p>You can override the default behaviour re-defining the <code>onFail(message?)</code> hook:</p>
+          <pre><code>
+t.options.onFail = function (message) {
+  // your code here
+};
+          </code></pre>
+
+          <a name="util"><h2>util</h2></a>
+          <p>There is a bunch of functions used internally by tcomb which are exported for convenience:</p>
+
+          <h3>format(format, ...values?)</h3>
+          <p>Like <a href="http://nodejs.org/api/util.html#util_util_format_format">util.format in Node</a></p>
+          <pre><code>
+format('Invalid argument `name` = `%s` supplied to `%s`', 1, 'MyType');
+// => 'Invalid argument `name` = `1` supplied to `MyType`'
+          </code></pre>
+
+          <h3>getKind(type)</h3>
+          <p>Returns a type's kind:</p>
+          <pre><code>
+getKind(Str);       // => 'irreducible'
+getKind(list(Str)); // => 'list'
+          </code></pre>
+
+          <h3>getFunctionName(f)</h3>
+          <p>Returns a function's <code>name</code> or <code>displayName</code> if specified, otherwise fallbacks on '&lt;function&ltarity&gt&gt;':</p>
+          <pre><code>
+getFunctionName(getKind); // => 'getKind'
+getFunctionName(function () {}); // => '&lt;function0&gt;'
+          </code></pre>
+
+          <h3>getName(type)</h3>
+          <p>Returns a type's name:</p>
+          <pre><code>
+getName(Str); // => 'Str'
+          </code></pre>
+          <p>If name is not specified, fallbacks according to <a href="http://flowtype.org">http://flowtype.org</a></p>
+
+
+          <h3>mixin(target, source, override?)</h3>
+          <p>Safe version of mixin, properties can be overwritten:</p>
+          <pre><code>
+mixin({a: 1}, {b: 2}); // => {a: 1, b: 2}
+mixin({a: 1}, {a: 2}); // => fail!
+          </code></pre>
+          <p>unless <code>override = true</code></p>
+
         </div>
       </div>
     </div>
@@ -645,5 +798,16 @@ func([Num, Num], Num).is(func(Num, Num).of(id));        // Returns: false
   </body>
   <script type="text/javascript" src="../js/highlight.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
+  <!-- Google Analytics -->
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-53674495-1', 'auto');
+    ga('send', 'pageview');
+
+  </script>
 </html>
 
