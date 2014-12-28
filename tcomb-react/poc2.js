@@ -49,7 +49,7 @@ var Playground = React.createClass({displayName: "Playground",
         React.createElement("h1", null, this.props.component.displayName, " playground"),
         React.createElement("h3", null, "Preview"),
         React.createElement("div", {ref: "preview"}),
-        React.createElement("h3", null, "Props"),
+        React.createElement("h3", null, "Props (changes will be reflected in the preview)"),
         React.createElement(this.state.Form, {ref: "form", onChange: this.show}),
         React.createElement("button", {onClick: this.show}, "Show")
       )
