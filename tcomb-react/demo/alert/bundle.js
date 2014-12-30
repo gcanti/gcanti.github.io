@@ -2,149 +2,213 @@
 'use strict';
 
 var React = require('react');
-var reactTools = require('react-tools');
+var transform = require('react-tools').transform;
 var t = require('tcomb-form');
+var toPropTypes = require('.').react.toPropTypes;
 
-t.form.config.transformers.ReactElement = {
+function defaultTemplate(locals) {
+  return (
+    React.createElement("div", {className: "row"}, 
+      React.createElement("div", {className: "col-sm-12"}, 
+        React.createElement("h1", null, locals.displayName, " playground")
+      ), 
+      React.createElement("div", {className: "col-sm-6"}, 
+        React.createElement("h3", null, "Props"), 
+        React.createElement("p", null, React.createElement("b", null, "Hint"), ": Changes will be reflected in the preview"), 
+        locals.Form, 
+        React.createElement("button", {onClick: locals.onChange}, "Show")
+      ), 
+      React.createElement("div", {className: "col-sm-6"}, 
+        React.createElement("h3", null, "Preview"), 
+        React.createElement("div", {ref: locals.previewRef})
+      )
+    )
+  );
+}
 
-  format: function (value) {
-    return t.react.ReactElement.is(value) ? React.renderToStaticMarkup(value) : value;
-  },
-
-  parse: function (value) {
-    try {
-      return eval(reactTools.transform(value));
-    } catch (e) {
-      return value;
-    }
-  }
-
-};
+var PlaygroundProps = t.struct({
+  component: t.Func,
+  template: t.maybe(t.Func),
+  props: t.Type,
+  form: t.maybe(t.Obj)
+});
 
 var Playground = React.createClass({displayName: "Playground",
 
+  // dogfooding
+  propTypes: toPropTypes(PlaygroundProps, {debug: true}),
+
   getInitialState: function () {
-    var PropTypes = this.props.component.TcombPropTypes;
-    var Form = t.form.create(PropTypes, {
-      value: this.props.props,
-      auto: 'labels'
-    });
+    var Form = t.form.create(this.props.props, this.props.form);
     return {
       Form: Form
     };
   },
 
-  show: function () {
-    setTimeout(function () {
-      var value = this.refs.form.getValue();
-      if (value) {
-        React.render(React.createElement(this.props.component, React.__spread({},  value)), this.refs.preview.getDOMNode());
-      }
-    }.bind(this), 0);
+  show: function (rawValue) {
+    var value = this.refs.form.getValue();
+    if (value) {
+      React.render(React.createElement(this.props.component, React.__spread({},  value)), this.refs.preview.getDOMNode());
+    }
   },
 
   render: function () {
+
+    var locals = {
+      displayName: this.props.component.displayName,
+      Form: React.createElement(this.state.Form, {ref: "form", onChange: this.show}),
+      onChange: this.show,
+      previewRef: 'preview'
+    };
+
+    return (this.props.template || defaultTemplate)(locals);
+  }
+
+});
+
+// add a custom trasformer for ReactNode to tcomb-form config
+// see http://gcanti.github.io/tcomb-form/guide/index.html#transformers
+t.form.config.transformers.ReactNode = {
+
+  format: function (element) {
+    return t.react.ReactElement.is(element) ? React.renderToStaticMarkup(element) :
+      t.Nil.is(element) ? null :
+      String(element);
+  },
+
+  parse: function (jsx) {
+    try {
+      return eval(transform(jsx));
+    } catch (e) {
+      return jsx;
+    }
+  }
+
+};
+
+module.exports = Playground;
+},{".":"/Users/giulio/Documents/Projects/github/tcomb-react/index.js","react":"react","react-tools":"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/react-tools/main.js","tcomb-form":"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/tcomb-form/index.js"}],"/Users/giulio/Documents/Projects/github/tcomb-react/docs/demo/alert/src.js":[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var t = require('../../../.');
+
+var AlertType = t.enums.of('info success danger warning');
+
+var AlertProps = t.struct({
+  type: AlertType,
+  children: t.react.ReactNode
+});
+
+var Alert = React.createClass({displayName: "Alert",
+
+  propTypes: t.react.toPropTypes(AlertProps),
+
+  render: function () {
     return (
-      React.createElement("div", null,
-        React.createElement("h1", null, this.props.component.displayName, " playground"),
-        React.createElement("h3", null, "Preview"),
-        React.createElement("div", {ref: "preview"}),
-        React.createElement("h3", null, "Props (changes will be reflected in the preview)"),
-        React.createElement(this.state.Form, {ref: "form", onChange: this.show}),
-        React.createElement("button", {onClick: this.show}, "Show")
+      React.createElement("div", {
+      className: 'alert alert-' + this.props.type}, 
+      this.props.children
       )
     );
   }
 
 });
 
-module.exports = Playground;
-},{"react":"react","react-tools":"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/react-tools/main.js","tcomb-form":"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/tcomb-form/index.js"}],"/Users/giulio/Documents/Projects/github/tcomb-react/dev/dev.jsx":[function(require,module,exports){
-'use strict';
+var Playground = require('../../../Playground.jsx');
 
-var React = require('react');
-var t = require('../.');
-var Playground = require('../Playground.jsx');
-
-var AlertType = t.enums.of('info success danger', 'AlertType');
-
-var BootstrapAlert = React.createClass({displayName: "BootstrapAlert",
-
-  mixins: [t.react.Mixin({
-    type: AlertType,
-    content: t.react.ReactElement
-  })],
-
-  render: function () {
-    return React.createElement("div", {className: 'alert alert-' + this.props.type}, this.props.content);
+var form = {
+  auto: 'labels',
+  value: {
+    type: 'info',
+    children: React.createElement("b", null, "You can use JSX in the form")
   }
-
-});
+};
 
 var playground = React.render(
   React.createElement(Playground, {
-    component: BootstrapAlert,
-    props: {type: 'danger', content: React.createElement("b", null, "You can even use JSX in the form")}}),
+    component: Alert, 
+    props: AlertProps, 
+    form: form}),
   document.getElementById('app')
 );
 
 playground.show();
-
-},{"../.":"/Users/giulio/Documents/Projects/github/tcomb-react/index.js","../Playground.jsx":"/Users/giulio/Documents/Projects/github/tcomb-react/Playground.jsx","react":"react"}],"/Users/giulio/Documents/Projects/github/tcomb-react/index.js":[function(require,module,exports){
+},{"../../../.":"/Users/giulio/Documents/Projects/github/tcomb-react/index.js","../../../Playground.jsx":"/Users/giulio/Documents/Projects/github/tcomb-react/Playground.jsx","react":"react"}],"/Users/giulio/Documents/Projects/github/tcomb-react/index.js":[function(require,module,exports){
+(function (process){
 'use strict';
 
 var React = require('react');
 var t = require('tcomb-validation');
+var format = t.util.format;
 
 var ReactElement = t.irreducible('ReactElement', React.isValidElement);
+var ReactNode = t.irreducible('ReactNode', function (x) {
+  return t.Str.is(x) || t.Num.is(x) || ReactElement.is(x) || t.list(ReactNode).is(x);
+});
 
-function getPropTypes(spec) {
+function toPropTypes(type, opts) {
 
-  var propTypes = {};
-  var props = spec.meta.props;
+  var ret = {};
 
-  Object.keys(props).forEach(function (k) {
+  // envify is great
+  if (process.env.NODE_ENV !== 'production') {
 
-    // React custom prop validators
-    // see http://facebook.github.io/react/docs/reusable-components.html
+    opts = opts || {};
+    var isSubtype = (t.util.getKind(type) === 'subtype');
+    var props = isSubtype ? type.meta.type.meta.props : type.meta.props;
 
-    propTypes[k] = function (values, name, displayName) {
-      var type = props[name];
-      var value = values[name];
-      var err = t.validate(value, type).firstError();
-      if (err) {
-        return new Error(t.util.format('Invalid prop `%s` = `%s` supplied to `%s`, should be `%s`', name, value, displayName, t.util.getName(type)));
+    Object.keys(props).forEach(function (k) {
+
+      var name = t.util.getName(props[k]);
+
+      // React custom prop validators
+      // see http://facebook.github.io/react/docs/reusable-components.html
+      function checkPropType(values, prop, displayName) {
+        var value = values[prop];
+        if (!t.validate(value, props[prop]).isValid()) {
+          var message = format('Invalid prop `%s` = `%s` supplied to `%s`, should be `%s`', prop, value, displayName, name);
+          if (opts.debug === true) {
+            t.fail(message);
+          }
+          return new Error(message);
+        }
       }
-    };
 
-  });
+      // add a readable entry in the call stack
+      checkPropType.displayName = format('Invalid prop `%s`, should be `%s`', k, name);
 
-  return propTypes;
-}
+      ret[k] = checkPropType;
 
-function Mixin(spec) {
+    });
 
-  if (t.Obj.is(spec)) {
-    spec = t.struct(spec);
+    // kinda hacky
+    if (isSubtype) {
+      ret.__all__ = function (values, prop, displayName) {
+        if (!type.meta.predicate(values)) {
+          var message = format('Invalid props `%j` supplied to `%s`, should be `%s`', values, displayName, t.util.getName(type));
+          if (opts.debug === true) {
+            t.fail(message);
+          }
+          return new Error(message);
+        }
+      };
+    }
+
   }
 
-  return {
-    propTypes: getPropTypes(spec),
-    statics: {
-      // attach the struct to component constructor as a static property
-      TcombPropTypes: spec
-    }
-  };
+  return ret;
 }
 
 t.react = {
-  getPropTypes: getPropTypes,
-  Mixin: Mixin,
-  ReactElement: ReactElement
+  toPropTypes: toPropTypes,
+  ReactElement: ReactElement,
+  ReactNode: ReactNode
 };
 
 module.exports = t;
-},{"react":"react","tcomb-validation":"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/tcomb-validation/index.js"}],"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/react-tools/main.js":[function(require,module,exports){
+}).call(this,require('_process'))
+},{"_process":"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js","react":"react","tcomb-validation":"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/tcomb-validation/index.js"}],"/Users/giulio/Documents/Projects/github/tcomb-react/node_modules/react-tools/main.js":[function(require,module,exports){
 'use strict';
 
 var visitors = require('./vendor/fbtransform/visitors');
@@ -13645,11 +13709,11 @@ function textbox(opts, ctx) {
       if (transformer) {
         value = transformer.parse(value);
       }
-      this.state.value = value;
-      this.forceUpdate();
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
+      this.setState({value: value}, function () {
+        if (this.props.onChange) {
+          this.props.onChange(value);
+        }
+      }.bind(this));
     },
 
     getValue: function () {
@@ -13718,11 +13782,11 @@ function checkbox(opts, ctx) {
     },
 
     onChange: function (value) {
-      this.state.value = value;
-      this.forceUpdate();
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
+      this.setState({value: value}, function () {
+        if (this.props.onChange) {
+          this.props.onChange(value);
+        }
+      }.bind(this));
     },
 
     getValue: function () {
@@ -13807,11 +13871,11 @@ function select(opts, ctx) {
       if (value === nullOption.value) {
         value = null;
       }
-      this.state.value = value;
-      this.forceUpdate();
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
+      this.setState({value: value}, function () {
+        if (this.props.onChange) {
+          this.props.onChange(value);
+        }
+      }.bind(this));
     },
 
     getValue: function () {
@@ -13878,11 +13942,11 @@ function radio(opts, ctx) {
     },
 
     onChange: function (value) {
-      this.state.value = value;
-      this.forceUpdate();
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
+      this.setState({value: value}, function () {
+        if (this.props.onChange) {
+          this.props.onChange(value);
+        }
+      }.bind(this));
     },
 
     getValue: function () {
@@ -13978,11 +14042,11 @@ function struct(opts, ctx) {
     },
 
     onChange: function (value) {
-      this.state.value = value;
-      this.forceUpdate();
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
+      this.setState({value: value}, function () {
+        if (this.props.onChange) {
+          this.props.onChange(value);
+        }
+      }.bind(this));
     },
 
     getValue: function () {
@@ -14107,11 +14171,11 @@ function list(opts, ctx) {
     },
 
     onChange: function (value) {
-      this.state.value = value;
-      this.forceUpdate();
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
+      this.setState({value: value}, function () {
+        if (this.props.onChange) {
+          this.props.onChange(value);
+        }
+      }.bind(this));
     },
 
     getValue: function () {
@@ -18148,122 +18212,122 @@ function decodeUtf8Char (str) {
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
-  'use strict';
+	'use strict';
 
   var Arr = (typeof Uint8Array !== 'undefined')
     ? Uint8Array
     : Array
 
-  var PLUS   = '+'.charCodeAt(0)
-  var SLASH  = '/'.charCodeAt(0)
-  var NUMBER = '0'.charCodeAt(0)
-  var LOWER  = 'a'.charCodeAt(0)
-  var UPPER  = 'A'.charCodeAt(0)
+	var PLUS   = '+'.charCodeAt(0)
+	var SLASH  = '/'.charCodeAt(0)
+	var NUMBER = '0'.charCodeAt(0)
+	var LOWER  = 'a'.charCodeAt(0)
+	var UPPER  = 'A'.charCodeAt(0)
 
-  function decode (elt) {
-    var code = elt.charCodeAt(0)
-    if (code === PLUS)
-      return 62 // '+'
-    if (code === SLASH)
-      return 63 // '/'
-    if (code < NUMBER)
-      return -1 //no match
-    if (code < NUMBER + 10)
-      return code - NUMBER + 26 + 26
-    if (code < UPPER + 26)
-      return code - UPPER
-    if (code < LOWER + 26)
-      return code - LOWER + 26
-  }
+	function decode (elt) {
+		var code = elt.charCodeAt(0)
+		if (code === PLUS)
+			return 62 // '+'
+		if (code === SLASH)
+			return 63 // '/'
+		if (code < NUMBER)
+			return -1 //no match
+		if (code < NUMBER + 10)
+			return code - NUMBER + 26 + 26
+		if (code < UPPER + 26)
+			return code - UPPER
+		if (code < LOWER + 26)
+			return code - LOWER + 26
+	}
 
-  function b64ToByteArray (b64) {
-    var i, j, l, tmp, placeHolders, arr
+	function b64ToByteArray (b64) {
+		var i, j, l, tmp, placeHolders, arr
 
-    if (b64.length % 4 > 0) {
-      throw new Error('Invalid string. Length must be a multiple of 4')
-    }
+		if (b64.length % 4 > 0) {
+			throw new Error('Invalid string. Length must be a multiple of 4')
+		}
 
-    // the number of equal signs (place holders)
-    // if there are two placeholders, than the two characters before it
-    // represent one byte
-    // if there is only one, then the three characters before it represent 2 bytes
-    // this is just a cheap hack to not do indexOf twice
-    var len = b64.length
-    placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
+		// the number of equal signs (place holders)
+		// if there are two placeholders, than the two characters before it
+		// represent one byte
+		// if there is only one, then the three characters before it represent 2 bytes
+		// this is just a cheap hack to not do indexOf twice
+		var len = b64.length
+		placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
 
-    // base64 is 4/3 + up to two characters of the original data
-    arr = new Arr(b64.length * 3 / 4 - placeHolders)
+		// base64 is 4/3 + up to two characters of the original data
+		arr = new Arr(b64.length * 3 / 4 - placeHolders)
 
-    // if there are placeholders, only get up to the last complete 4 chars
-    l = placeHolders > 0 ? b64.length - 4 : b64.length
+		// if there are placeholders, only get up to the last complete 4 chars
+		l = placeHolders > 0 ? b64.length - 4 : b64.length
 
-    var L = 0
+		var L = 0
 
-    function push (v) {
-      arr[L++] = v
-    }
+		function push (v) {
+			arr[L++] = v
+		}
 
-    for (i = 0, j = 0; i < l; i += 4, j += 3) {
-      tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
-      push((tmp & 0xFF0000) >> 16)
-      push((tmp & 0xFF00) >> 8)
-      push(tmp & 0xFF)
-    }
+		for (i = 0, j = 0; i < l; i += 4, j += 3) {
+			tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
+			push((tmp & 0xFF0000) >> 16)
+			push((tmp & 0xFF00) >> 8)
+			push(tmp & 0xFF)
+		}
 
-    if (placeHolders === 2) {
-      tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
-      push(tmp & 0xFF)
-    } else if (placeHolders === 1) {
-      tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
-      push((tmp >> 8) & 0xFF)
-      push(tmp & 0xFF)
-    }
+		if (placeHolders === 2) {
+			tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
+			push(tmp & 0xFF)
+		} else if (placeHolders === 1) {
+			tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
+			push((tmp >> 8) & 0xFF)
+			push(tmp & 0xFF)
+		}
 
-    return arr
-  }
+		return arr
+	}
 
-  function uint8ToBase64 (uint8) {
-    var i,
-      extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-      output = "",
-      temp, length
+	function uint8ToBase64 (uint8) {
+		var i,
+			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+			output = "",
+			temp, length
 
-    function encode (num) {
-      return lookup.charAt(num)
-    }
+		function encode (num) {
+			return lookup.charAt(num)
+		}
 
-    function tripletToBase64 (num) {
-      return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
-    }
+		function tripletToBase64 (num) {
+			return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
+		}
 
-    // go through the array every three bytes, we'll deal with trailing stuff later
-    for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-      temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-      output += tripletToBase64(temp)
-    }
+		// go through the array every three bytes, we'll deal with trailing stuff later
+		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+			output += tripletToBase64(temp)
+		}
 
-    // pad the end with zeros, but make sure to not forget the extra bytes
-    switch (extraBytes) {
-      case 1:
-        temp = uint8[uint8.length - 1]
-        output += encode(temp >> 2)
-        output += encode((temp << 4) & 0x3F)
-        output += '=='
-        break
-      case 2:
-        temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
-        output += encode(temp >> 10)
-        output += encode((temp >> 4) & 0x3F)
-        output += encode((temp << 2) & 0x3F)
-        output += '='
-        break
-    }
+		// pad the end with zeros, but make sure to not forget the extra bytes
+		switch (extraBytes) {
+			case 1:
+				temp = uint8[uint8.length - 1]
+				output += encode(temp >> 2)
+				output += encode((temp << 4) & 0x3F)
+				output += '=='
+				break
+			case 2:
+				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
+				output += encode(temp >> 10)
+				output += encode((temp >> 4) & 0x3F)
+				output += encode((temp << 2) & 0x3F)
+				output += '='
+				break
+		}
 
-    return output
-  }
+		return output
+	}
 
-  exports.toByteArray = b64ToByteArray
-  exports.fromByteArray = uint8ToBase64
+	exports.toByteArray = b64ToByteArray
+	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
 },{}],"/usr/local/lib/node_modules/watchify/node_modules/browserify/node_modules/buffer/node_modules/ieee754/index.js":[function(require,module,exports){
@@ -18703,4 +18767,4 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}]},{},["/Users/giulio/Documents/Projects/github/tcomb-react/dev/dev.jsx"]);
+},{}]},{},["/Users/giulio/Documents/Projects/github/tcomb-react/docs/demo/alert/src.js"]);
