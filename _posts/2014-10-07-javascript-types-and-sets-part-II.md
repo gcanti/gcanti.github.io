@@ -1,6 +1,7 @@
 ---
 layout: post
 title: JavaScript, Types and Sets - Part II
+excerpt: "Now it's time to define four other useful type combinators"
 ---
 
 ## Summary
@@ -98,7 +99,7 @@ var Phonebook = dict(Num);
 
 var phonebook = Phonebook({
   'Andrew Parson': 8806336,
-  'Emily Everett': 6784346, 
+  'Emily Everett': 6784346,
   'Peter Power': 7658344
 }); // => {'Andrew Parson': 8806336, 'Emily Everett': 6784346, 'Peter Power': 7658344} (immutable)
 ```
@@ -189,14 +190,14 @@ Person.dispatch = function (x) {
 };
 
 Person({
-  tag: 'employer', 
-  name: 'Mark', 
+  tag: 'employer',
+  name: 'Mark',
   surname: 'Zuckerberg'
 }); // => new Employer({name: 'Mark', surname: 'Zuckerberg'});
 
 Person({
-  tag: 'employee', 
-  name: 'Giulio', 
+  tag: 'employee',
+  name: 'Giulio',
   surname: 'Canti'
 }); // => new Employee({name: 'Giulio', surname: 'Canti'});
 ```
@@ -227,14 +228,14 @@ OptionalStr('hello');   // => 'hello'
 ## Conclusion
 
 I think Math can bring to software development a real benefit: its methodology. Math has proven **over the centuries**
-to be a successful paradigm (quite everything around us is built on it) in terms of achievements and (why not) beauty. 
+to be a successful paradigm (quite everything around us is built on it) in terms of achievements and (why not) beauty.
 
 According to this methodology the domain models are a series of set definitions, functions must be defined clearly specifying domain and codomain and immutability is everywhere.
 
 It's a good time to be a mathematician and a programmer: functional programming starts to go mainstream and libraries like React.js
 do a good job to prove that well founded functional software can be also pragmatic.
 
-Finally, as a personal note, I'd like to spend a few more words on React: it's the first library that fits well with my mind. The first time I saw this: 
+Finally, as a personal note, I'd like to spend a few more words on React: it's the first library that fits well with my mind. The first time I saw this:
 
 > Any user input will have no effect on the rendered element because React has declared the value to be "Hello!" (excerpt
 from React [docs](http://facebook.github.io/react/docs/forms.html) on Controlled Components)
@@ -246,4 +247,4 @@ I thought "That is a library I can love!". Not for the implementation (though it
 If you want to see these concepts in action:
 
 - [tcomb](https://github.com/gcanti) - Pragmatic runtime type checking for JavaScript based on type combinators
-- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - Domain Driven Forms. Automatically generate form markup from a domain model 
+- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - Domain Driven Forms. Automatically generate form markup from a domain model

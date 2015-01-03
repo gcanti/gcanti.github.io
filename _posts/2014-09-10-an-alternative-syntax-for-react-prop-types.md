@@ -1,6 +1,7 @@
 ---
 layout: post
 title: An alternative syntax for React propTypes
+excerpt: "Additional fine grained type checks, easily integrable with tcomb-form to build awesome demos of your components"
 ---
 
 ## Should I add propTypes to my components?
@@ -30,28 +31,28 @@ There is already a fine [implementation](http://react-bootstrap.github.io), so l
 var pt = require('react').PropTypes;
 
 var propTypes = {
-  
+
   bsStyle: pt.oneOf(['info', 'warning', 'success', 'danger']).isRequired,
-  
+
   bsSize: pt.oneOf(['large', 'medium', 'small', 'xsmall']),
-  
+
   onDismiss: pt.func,
-  
+
   dismissAfter: function(props) {
     var n = props.dismissAfter;
-    
+
     // dismissAfter is optional
     if (n != null) {
-      
+
       // dismissAfter should be a positive integer
       if (typeof n !== 'number' || n !== parseInt(n, 10) || n < 0) {
-        return new Error('Invalid `dismissAfter` supplied to `Alert`' + 
+        return new Error('Invalid `dismissAfter` supplied to `Alert`' +
           ', expected a positive integer');
       }
-      
+
       // if specified then `onDismiss` must be specified too
       if (typeof props.onDismiss !== 'function') {
-        return new Error('Invalid `onDismiss` supplied to `Alert`' + 
+        return new Error('Invalid `onDismiss` supplied to `Alert`' +
           ', expected a func when `dismissAfter` is specified');
       }
     }
@@ -92,7 +93,7 @@ var AlertProps = t.subtype(t.struct({
   dismissAfter: t.maybe(PositiveInt)
 }, globalPredicate);
 
-// `bind` returns a proxy component with the same interface of the original component 
+// `bind` returns a proxy component with the same interface of the original component
 // but with asserts included. In production you can choose to switch to the original one
 var SafeAlert = t.react.bind(Alert, AlertProps, {strict: true});
 ```

@@ -1,6 +1,8 @@
 ---
 layout: post
 title: "Understanding React and reimplementing it from scratch Part 2: Controllers"
+excerpt: "In the previous article I introduced the universal virtual DOM (UVDOM) and the concept of views as functions. But this kind of view is \"impassive\", that is it's not able to react to user inputs. If I could render the view in the
+browser and click the button nothing will happen. In a browser user inputs are modeled as events so I need to add events to the UVDOM and a way to handle them..."
 ---
 
 ## Introduction

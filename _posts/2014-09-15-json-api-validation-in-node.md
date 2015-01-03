@@ -1,6 +1,7 @@
 ---
 layout: post
 title: JSON API Validation In Node.js
+excerpt: "In the last post I've showed a good solution for consuming a JSON API on the client, but what about the server?"
 ---
 
 ## The Problem

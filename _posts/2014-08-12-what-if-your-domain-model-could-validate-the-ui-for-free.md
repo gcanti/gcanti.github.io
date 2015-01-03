@@ -2,13 +2,15 @@
 layout: post
 title: What if your domain model could validate the UI for free?
 folder: what-if-your-domain-model-could-validate-the-ui-for-free
+excerpt: "Does the world need another validation library? Probably not, but I think of tcomb more as a tool to build
+fast and safe domain models"
 ---
 
 ## The Idea
 
-Does the world need another validation library? Probably not, but I think of tcomb more as a tool to build 
-fast and safe domain models. Since I want the **models be the single source of truth** and 
-it's hard to keep my models and the UI validation rules synced, I think there is still something to explore. 
+Does the world need another validation library? Probably not, but I think of tcomb more as a tool to build
+fast and safe domain models. Since I want the **models be the single source of truth** and
+it's hard to keep my models and the UI validation rules synced, I think there is still something to explore.
 The models should already express those validation rules so I only need to make them explicits.
 I'll show you how to achive this goal with a simple example, a sign up form.
 
@@ -88,7 +90,7 @@ I'll use [Bootstrap](http://getbootstrap.com) for this
 ## The View Controller
 
 This is the tricky part: the controller must validate the input and show visual feedback to the
-user that something went wrong. It's straightforward to write a general validating function exploiting 
+user that something went wrong. It's straightforward to write a general validating function exploiting
 the `meta.props` hash of {{ site.projects.tcomb.markdown }} structs.
 
 ```javascript
@@ -108,11 +110,11 @@ $('form').on('submit', function (evt) {
 // - visual feedback is more fine grained
 // - assume inputs are named like the struct props
 function validate(Struct) {
-  
+
   var values = {};
   var props = Struct.meta.props;
   var isValid = true;
-  
+
   for (var id in props) {
     if (props.hasOwnProperty(id)) {
       var $input = $('#' + id);

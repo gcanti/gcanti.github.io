@@ -1,12 +1,15 @@
 ---
 layout: post
 title: JavaScript, Types and Sets - Part I
+excerpt: "In this article I'll illustrate how a mathematician could regard the JavaScript language and its type system.
+I'll talk about sets, functions and immutability, building a coherent framework of concepts.
+This framework helps me to reason about the system while I'm coding. I hope it can help you too"
 ---
 
 ## Introduction
 
-In this article I'll illustrate how a mathematician could regard the JavaScript language and its type system. 
-I'll talk about sets, functions and immutability, building a coherent framework of concepts. 
+In this article I'll illustrate how a mathematician could regard the JavaScript language and its type system.
+I'll talk about sets, functions and immutability, building a coherent framework of concepts.
 This framework helps me to reason about the system while I'm coding. I hope it can help you too.
 
 Mathematicians for a long, long time and with terrific success have used two fundamental building blocks: sets and functions.
@@ -211,7 +214,7 @@ When I look at an hash, what I **see** is a function. And from now on maybe you 
 }
 ```
 
-Tuples and structs are two ways to express the **same math concept**: the *Cartesian product* of two sets A and B, denoted by `A × B` is the set of all ordered pairs `(a, b)` such that `a` is a member of A and `b` is a member of B. 
+Tuples and structs are two ways to express the **same math concept**: the *Cartesian product* of two sets A and B, denoted by `A × B` is the set of all ordered pairs `(a, b)` such that `a` is a member of A and `b` is a member of B.
 
 The two objects in the code snippet above can be thought (*) belonging to the same set `Str × Num × Bool`. The only difference is that tuples are accessed by index, structs by name.
 
@@ -226,7 +229,7 @@ var order = {
 };
 ```
 
-> **Note**. Another example of a tuple is the `arguments` object of a function. As discussed above it's the same having `n` different arguments as a tuple or only [one argument](https://gcanti.github.io/2014/09/25/six-reasons-to-define-constructors-with-only-one-argument.html) as a struct (or even mix the two). 
+> **Note**. Another example of a tuple is the `arguments` object of a function. As discussed above it's the same having `n` different arguments as a tuple or only [one argument](https://gcanti.github.io/2014/09/25/six-reasons-to-define-constructors-with-only-one-argument.html) as a struct (or even mix the two).
 
 Let's define the `tuple` and `struct` combinators
 
@@ -236,7 +239,7 @@ Let's define the `tuple` and `struct` combinators
 "use strict";
 
 function tuple(types) {
-  return function Tuple(arr) {    
+  return function Tuple(arr) {
     // check input structure
     assert(Array.isArray(arr));
     // check i-th coordinate and hydrate nested structures
@@ -252,7 +255,7 @@ Person(['Giulio', 'Canti', true]);  // => throws TypeError
 Person(['Giulio', 40, true]);       // => ['Giulio', 40, true] (immutable)
 ```
 
-> **Note**. Native JavaScript arrays and objects are mutable, but fortunately JavaScript provides the excellent function [Object.freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) that "freezes an object: that is, prevents new properties from being added to it; prevents existing properties from being removed; and prevents existing properties, or their enumerability, configurability, or writability, from being changed. **In essence the object is made effectively immutable**". 
+> **Note**. Native JavaScript arrays and objects are mutable, but fortunately JavaScript provides the excellent function [Object.freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) that "freezes an object: that is, prevents new properties from being added to it; prevents existing properties from being removed; and prevents existing properties, or their enumerability, configurability, or writability, from being changed. **In essence the object is made effectively immutable**".
 
 ```js
 // the struct combinator
@@ -290,14 +293,14 @@ var Person = struct({
 });
 
 Person({
-  name: 'Giulio', 
+  name: 'Giulio',
   age: 'Canti', // wrong
   isSingle: true
 });  // => throws TypeError
 
 Person({
-  name: 'Giulio', 
-  age: 40, 
+  name: 'Giulio',
+  age: 40,
   isSingle: true
 }); // => {name: 'Giulio', age: 40, isSingle: true} (immutable)
 ```
@@ -367,4 +370,4 @@ Giulio
 If you want to see these concepts in action:
 
 - [tcomb](https://github.com/gcanti) - Pragmatic runtime type checking for JavaScript based on type combinators
-- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - Domain Driven Forms. Automatically generate form markup from a domain model 
+- [tcomb-form](https://gcanti.github.io/resources/tcomb-form/playground/playground.html) - Domain Driven Forms. Automatically generate form markup from a domain model

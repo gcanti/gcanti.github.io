@@ -1,6 +1,7 @@
 ---
 layout: post
 title: JSON Deserialization Into An Object Model
+excerpt: "Deserializing the payload of a JSON Api into your object model can be cumbersome: you must handle all this issues by hand. In this post I'll show you how this work can be done in a few lines of code and in a safe way with the help of tcomb."
 ---
 
 ## The Problem
@@ -12,7 +13,7 @@ Deserializing the payload of a JSON Api into your object model can be cumbersome
 - if there are nested models, instantiate them with proper constructors
 
 In this post I'll show you how
-this work can be done in **a few lines of code and in a safe way** with the help of [tcomb](https://github.com/gcanti/tcomb). 
+this work can be done in **a few lines of code and in a safe way** with the help of [tcomb](https://github.com/gcanti/tcomb).
 
 tcomb is a library for Node.js and the browser which allows you to check the types of JavaScript values at runtime with a simple syntax. It's great for **Domain Driven Design**, for checking external input, for testing and for adding safety to your internal code.
 

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: "Understanding React and reimplementing it from scratch Part 1: Views"
+excerpt: "Pressed by my own thread on Reddit I started a journey to understand what can be generalized and unified in the different implementations of a React-like library. The best way I know to understand something isn't just to learn how it works but which problems it's trying to solve and why it's designed that way."
 ---
 
 ## Introduction

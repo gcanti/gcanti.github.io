@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Six reasons to define constructors with only one argument
+excerpt: "After all the comments here and on Reddit (thanks to all), I've updated this article to better explain my POV."
 ---
 
 ## Introduction
@@ -138,7 +139,7 @@ var person = deserialize(json);
 ```
 
 Since in `1-arity` arguments and instances have the same shape, you get
-deserialization for free. 
+deserialization for free.
 
 ```js
 var person = new Person(json);
@@ -173,7 +174,7 @@ all your classes, but with the `1-arity` pattern you can avoid the boilerplate w
 
 ```js
 function struct(props) {
-  
+
   function Struct(obj) {
 
     // make Struct idempotent
@@ -195,7 +196,7 @@ function struct(props) {
 
   }
 
-  // keep a reference to meta infos for further processing, 
+  // keep a reference to meta infos for further processing,
   // documentation tools and IDEs support
   Struct.meta = {
     props: props
@@ -220,9 +221,9 @@ This is an article explaining the rationale behind these reasons: [JavaScript, T
 
 ## Implementation
 
-I used this pattern to implement [tcomb](https://github.com/gcanti). 
+I used this pattern to implement [tcomb](https://github.com/gcanti).
 
-tcomb is a library for Node.js and the browser which allows you to **check the types** of 
-JavaScript values at runtime with a simple syntax. It's great for **Domain Driven Design**, 
-for testing and for adding safety to your internal code. 
+tcomb is a library for Node.js and the browser which allows you to **check the types** of
+JavaScript values at runtime with a simple syntax. It's great for **Domain Driven Design**,
+for testing and for adding safety to your internal code.
 
