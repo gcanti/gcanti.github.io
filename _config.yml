@@ -14,10 +14,16 @@ baseurl: /
 about: "<a href='/about.html'>about me</a>"
 blog: "<a href='/'>blog</a>"
 projects_list:
+ - flowcheck
  - tcomb-form
  - tcomb
  - tcomb-validation
 projects:
+ flowcheck:
+  name: flowcheck
+  link: https://gcanti.github.io/flowcheck
+  markdown: "[flowcheck](https://gcanti.github.io/flowcheck)"
+  description: "Runtime type checking for Flow."
  tcomb-form:
   name: tcomb-form
   link: https://gcanti.github.io/tcomb-form
