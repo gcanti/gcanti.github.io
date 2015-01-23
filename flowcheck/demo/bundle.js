@@ -424,7 +424,8 @@ var App = React.createClass({displayName: "App",
             )
           ), 
           React.createElement("div", {className: "form-group"}, 
-            React.createElement("button", {className: "btn btn-danger", onClick: this.run}, "Run (output to the console)")
+            React.createElement("button", {className: "btn btn-danger", onClick: this.run}, "Run"), 
+            React.createElement("p", null, "Output to the console, when an assert fails the debugger kicks in")
           ), 
           React.createElement("div", {className: "form-group"}, 
             alert
