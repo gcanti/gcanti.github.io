@@ -223,8 +223,15 @@
     if (varargs) { varargs = list(varargs); }
     return new Type(name, function (x, ctx, fast) {
       ctx = ctx || [];
+      var args = x;
+      // test if args is an array-like structure
+      if (args.hasOwnProperty('length')) {
+        args = slice(args, 0, len);
+        // handle optional arguments filling the array with undefined values
+        if (args.length < len) { args.length = len; }
+      }
       var errors = null, suberrors;
-      suberrors = typesTuple.validate(slice(x, 0, len), ctx.concat('arguments'), fast);
+      suberrors = typesTuple.validate(args, ctx.concat('arguments'), fast);
       if (suberrors) {
         if (fast) { return suberrors; }
         errors = errors || [];
@@ -371,7 +378,7 @@ var App = React.createClass({displayName: "App",
       });
       eval(code);
     } catch (e) {
-      console.error(e);
+      console.error(e.message);
       this.setState({error: e.message});
     }
   },
@@ -395,7 +402,10 @@ var App = React.createClass({displayName: "App",
               mode: "javascript", 
               value: this.state.value, 
               onChange: this.onSourceChange})
-          )
+          ), 
+          React.createElement("p", null, React.createElement("b", null, "React preview")), 
+          React.createElement("p", null, "use ", React.createElement("code", null, "React.render(..., preview);")), 
+          React.createElement("div", {id: "preview", style: {border: '1px solid #F6E4CC', padding: '20px', marginBottom: '20px'}})
         ), 
         React.createElement("div", {className: "col-md-6"}, 
           React.createElement("p", null, React.createElement("b", null, "Output")), 
@@ -23695,11 +23705,13 @@ function visitTypedFunction(traverse, node, path, state) {
   if (node.returnType) {
     var returnType = ctx.getType(node.returnType.typeAnnotation);
     utils.append(' var ret = (function (' + params.join(', ') + ') {', state);
-    utils.catchup(node.body.range[1], state);
-    utils.append(').apply(this, arguments); return ' + ctx.getProperty('check') + '(ret, ' + returnType + ');}', state);
+    traverse(node.body, path, state);
+    utils.catchup(node.body.range[1] - 1, state);
+    utils.append('}).apply(this, arguments); return ' + ctx.getProperty('check') + '(ret, ' + returnType + ');', state);
+  } else {
+    traverse(node.body, path, state);
   }
 
-  utils.catchup(node.range[1], state);
   return false;
 }
 visitTypedFunction.test = function(node, path, state) {
@@ -23738,12 +23750,27 @@ visitProgram.test = function (node, path, state) {
   return node.type === Syntax.Program;
 };
 
+/*
+// experimental interface support
+function visitInterface(traverse, node, path, state) {
+  console.log(node);
+  var ctx = new Context(state);
+  utils.catchup(node.range[1], state);
+  utils.append('var ' + node.id.name + ' = ' + ctx.getType(node.body) + ';', state);
+  return false;
+}
+visitInterface.test = function (node, path, state) {
+  return node.type === Syntax.InterfaceDeclaration;
+};
+*/
+
 module.exports = {
   visitorList: [
     visitProgram,
     visitTypedFunction,
     visitTypedVariableDeclarator,
     visitTypeAlias
+    //, visitInterface
   ]
 };
 
