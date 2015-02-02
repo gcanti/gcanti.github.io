@@ -39,7 +39,28 @@
       <div id="app"></div>
     </div>
   </body>
-  <script id="example" type="text/example">// primitives
+  <script id="example" type="text/example">class Counter extends React.Component {
+  // example of propTypes as type annotations
+  constructor(props: { initialCount: number; }) {
+    super(props);
+    this.state = {count: props.initialCount};
+  }
+  tick() {
+    this.setState({count: this.state.count + 1});
+  }
+  render() {
+    return (
+      <div onClick={this.tick.bind(this)}>
+        Clicks: {this.state.count}
+      </div>
+    );
+  }
+}
+Counter.defaultProps = { initialCount: 0 };
+
+React.render(<Counter />, preview); // try to add initialCount="a" to get an error
+
+// primitives
 var n: number = 1; // change to 'a' and try to run the code
 
 // lists
