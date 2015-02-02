@@ -63,7 +63,7 @@ browserify -t flowcheck -t [reactify --strip-types --harmony] input.js -o output
 
 If an assert fails **the debugger kicks in** so you can inspect the stack and quickly find out what's wrong.
 
-Flowcheck supports sourcemaps and there is [flowcheck-loader](https://github.com/gaearon/flowcheck-loader) for Webpack.
+Flowcheck supports sourcemaps and there is [flowcheck-loader](https://github.com/gaearon/flowcheck-loader) (thanks [@dan_abramov](https://twitter.com/dan_abramov)) for Webpack.
 
 ## Demo live
 
