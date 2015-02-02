@@ -58,7 +58,7 @@ Counter.defaultProps = { initialCount: 0 };
 
 npm install flowcheck
 
-browserify -t flowcheck -t [reactify --strip-types] input.js -o output.js
+browserify -t flowcheck -t [reactify --strip-types --harmony] input.js -o output.js
 ```
 
 If an assert fails **the debugger kicks in** so you can inspect the stack and quickly find out what's wrong.
