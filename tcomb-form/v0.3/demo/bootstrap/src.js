@@ -4,10 +4,10 @@ var React = require('react');
 var t = require('../../../.');
 
 // helper function
-function render(i, type, options) {
+function render(i, type, opts) {
 
   var formPreview = document.getElementById('p' + i);
-  var Form = t.form.Form;
+  var Form = t.form.create(type, opts);
 
   var App  = React.createClass({
 
@@ -23,11 +23,7 @@ function render(i, type, options) {
     render: function () {
       return (
         React.DOM.div(null,
-          React.createFactory(Form)({
-            ref: 'form',
-            type: type,
-            options: options
-          }),
+          React.createFactory(Form)({ref: 'form'}),
           React.DOM.button({
             onClick: this.onClick,
             className: 'btn btn-primary'

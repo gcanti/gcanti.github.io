@@ -25,9 +25,6 @@ pre code.hljs {
   padding: 0;
   background-color: transparent;
 }
-.alert-danger pre {
-  border-color: #a94442;
-}
 p {
   margin: 1.5em 0;
 }

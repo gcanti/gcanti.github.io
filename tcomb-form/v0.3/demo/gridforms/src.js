@@ -4,13 +4,13 @@ var React = require('react');
 var t = require('../../../.');
 
 // configure ionic plugin
-t.form.config.templates = require('../../../lib/skins/gridforms');
+t.form.config.templates = require('../../../lib/templates/gridforms');
 
 // helper function
-function render(i, type, options) {
+function render(i, type, opts) {
 
   var formPreview = document.getElementById('p' + i);
-  var Form = t.form.Form;
+  var Form = t.form.create(type, opts);
 
   var App  = React.createClass({
 
@@ -26,11 +26,7 @@ function render(i, type, options) {
     render: function () {
       return (
         React.DOM.div({className: "grid-form"},
-          React.createFactory(Form)({
-            ref: 'form',
-            type: type,
-            options: options
-          }),
+          React.createFactory(Form)({ref: 'form'}),
           React.DOM.br(),
           React.DOM.button({
             onClick: this.onClick,

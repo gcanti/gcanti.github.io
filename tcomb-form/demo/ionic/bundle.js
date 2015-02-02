@@ -5,7 +5,7 @@ var React = require('react');
 var t = require('../../../.');
 
 // configure ionic plugin
-t.form.config.templates = require('../../../lib/templates/ionic');
+t.form.config.templates = require('../../../lib/skins/ionic');
 
 var Account = t.struct({
   firstName: t.Str,
@@ -13,9 +13,11 @@ var Account = t.struct({
   email: t.maybe(t.Str)
 });
 
-var Form = t.form.create(Account, {
+var Form = t.form.Form;
+
+var options = {
   auto: 'labels'
-});
+};
 
 var App = React.createClass({displayName: 'App',
 
@@ -35,7 +37,11 @@ var App = React.createClass({displayName: 'App',
           React.createElement("h1", {className: "title"}, "Sign up")
         ),
         React.createElement("div", {className: "content has-header"},
-          React.createElement(Form, {ref: "form"}),
+          React.createFactory(Form)({
+            ref: 'form',
+            type: Account,
+            options: options
+          }),
           React.createElement("div", {className: "padding"},
             React.createElement("button", {onClick: this.onClick, className: "button button-block button-positive"}, "Create Account")
           )
@@ -47,788 +53,23 @@ var App = React.createClass({displayName: 'App',
 
 React.render(React.createElement(App, null), document.getElementById('preview'));
 
-},{"../../../.":2,"../../../lib/templates/ionic":10,"react":"react"}],2:[function(require,module,exports){
+
+
+},{"../../../.":2,"../../../lib/skins/ionic":17,"react":"react"}],2:[function(require,module,exports){
 var t = require('./lib');
 
-// plug bootstrap style
-t.form.config.templates = require('./lib/templates/bootstrap');
+// plug bootstrap skin
+t.form.config.templates = require('./lib/skins/bootstrap');
 
 module.exports = t;
-},{"./lib":6,"./lib/templates/bootstrap":9}],3:[function(require,module,exports){
-'use strict';
 
-var api = require('./protocols/api');
 
-var i18n = new api.I18n({
-  optional: ' (optional)',
-  add: 'Add',
-  remove: 'Remove',
-  up: 'Up',
-  down: 'Down'
-});
-
-module.exports = {
-  i18n: i18n
-};
-},{"./protocols/api":7}],4:[function(require,module,exports){
-'use strict';
-
-var React = require('react');
-var Context = require('./protocols/api').Context;
-var config = require('./config');
-var getFactory = require('./factories').getFactory;
-var getReport = require('./util/getReport');
-
-function create(type, opts) {
-
-  var factory = getFactory(type, opts);
-
-  var Form = React.createClass({displayName: 'Form',
-
-    // the public api returns `null` if validation failed
-    // unless the optional boolean argument `raw` is set to `true`
-    getValue: function (raw) {
-      var result = this.refs.input.getValue();
-      if (raw === true) { return result; }
-      if (result.isValid()) { return result.value; }
-      return null;
-    },
-
-    render: function () {
-
-      var ctx = new Context({
-        auto: 'placeholders',
-        i18n: config.i18n,
-        label: null,
-        path: [],
-        report: getReport(type),
-        templates: config.templates,
-        value: this.props.value
-      });
-      var Component = factory(opts, ctx);
-
-      return React.createElement(Component, {
-        onChange: this.props.onChange,
-        ref: 'input'
-      });
-    }
-  });
-
-  return Form;
-}
-
-module.exports = create;
-},{"./config":3,"./factories":5,"./protocols/api":7,"./util/getReport":13,"react":"react"}],5:[function(require,module,exports){
-'use strict';
-
-var React = require('react');
-var t = require('tcomb-validation');
-var api = require('./protocols/api');
-var theme = require('./protocols/theme');
-var config = require('./config');
-var compile = require('uvdom/react').compile;
-
-var getError = require('./util/getError');
-var getOptionsOfEnum = require('./util/getOptionsOfEnum');
-var getReport = require('./util/getReport');
-var humanize = require('./util/humanize');
-var merge = require('./util/merge');
-var move = require('./util/move');
-var uuid = require('./util/uuid');
-
-var assert = t.assert;
-var Nil = t.Nil;
-var mixin = t.util.mixin;
-var ValidationResult = t.ValidationResult;
-var getKind = t.util.getKind;
-var getName = t.util.getName;
-var Context = api.Context;
-
-function getFactory(type, opts) {
-
-  opts = opts || {};
-
-  // [extension point]
-  if (opts.factory) {
-    assert(t.Func.is(opts.factory), 'invalid `factory` option, must be a function with signature (opts, [ctx]) -> React Class');
-    return opts.factory;
-  }
-
-  // get factory by type
-  type = t.Type(type);
-  var kind = getKind(type);
-  if (config.kinds.hasOwnProperty(kind)) {
-    return config.kinds[kind](type, opts);
-  }
-
-  t.fail(t.util.format('cannot handle type %s', getName(type)));
-}
-
-//
-// factories
-//
-
-function textbox(opts, ctx) {
-
-  opts = new api.Textbox(opts || {});
-
-  var label = !Nil.is(opts.label) ? opts.label :
-    ctx.auto === 'labels' ? ctx.getDefaultLabel() :
-    null;
-
-  // labels have higher priority
-  var placeholder = null;
-  if (!label && ctx.auto !== 'none') {
-    placeholder = !Nil.is(opts.placeholder) ? opts.placeholder : ctx.getDefaultLabel();
-  }
-
-  var name = opts.name || ctx.getDefaultName();
-
-  var value = !Nil.is(opts.value) ? opts.value : !Nil.is(ctx.value) ? ctx.value : null;
-
-  var transformer = opts.transformer || config.transformers[getName(ctx.report.innerType)];
-
-  var template = opts.template || ctx.templates.textbox;
-
-  return React.createClass({
-
-    displayName: 'Textbox',
-
-    getInitialState: function () {
-      return {
-        hasError: !!opts.hasError,
-        value: value
-      };
-    },
-
-    onChange: function (evt) {
-      var value = evt.target.value || null;
-      if (transformer) {
-        value = transformer.parse(value);
-      }
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
-      this.setState({value: value});
-    },
-
-    getValue: function () {
-      var result = t.validate(this.state.value, ctx.report.type);
-      this.setState({
-        hasError: !result.isValid(),
-        value: result.value
-      });
-      return result;
-    },
-
-    render: function () {
-
-      var value = this.state.value;
-      if (transformer) {
-        value = transformer.format(value);
-      }
-
-      return compile(template(new theme.Textbox({
-        config: merge(ctx.config, opts.config),
-        disabled: opts.disabled,
-        error: getError(opts.error, this.state),
-        hasError: this.state.hasError,
-        help: opts.help,
-        label: label,
-        name: name,
-        onChange: this.onChange,
-        placeholder: placeholder,
-        type: opts.type || 'text',
-        value: value
-      })));
-    }
-  });
-}
-
-function checkbox(opts, ctx) {
-
-  opts = new api.Checkbox(opts || {});
-
-  // checkboxes must have a label
-  var label = opts.label || ctx.getDefaultLabel();
-
-  var name = opts.name || ctx.getDefaultName();
-
-  var value = t.Bool.is(opts.value) ? opts.value : t.Bool.is(ctx.value) ? ctx.value : false;
-
-  var template = opts.template || ctx.templates.checkbox;
-
-  return React.createClass({
-
-    displayName: 'Checkbox',
-
-    getInitialState: function () {
-      return {
-        hasError: !!opts.hasError,
-        value: value
-      };
-    },
-
-    onChange: function (evt) {
-      var value = evt.target.checked;
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
-      this.setState({value: value});
-    },
-
-    getValue: function () {
-      var result = t.validate(this.state.value, ctx.report.type);
-      this.setState({
-        hasError: !result.isValid(),
-        value: result.value
-      });
-      return result;
-    },
-
-    render: function () {
-      return compile(template(new theme.Checkbox({
-        config: merge(ctx.config, opts.config),
-        disabled: opts.disabled,
-        error: getError(opts.error, this.state),
-        hasError: this.state.hasError,
-        help: opts.help,
-        label: label,
-        name: name,
-        onChange: this.onChange,
-        value: this.state.value
-      })));
-    }
-  });
-}
-
-function select(opts, ctx) {
-
-  opts = new api.Select(opts || {});
-
-  var Enum = ctx.report.innerType;
-
-  // handle `multiple` attribute
-  var multiple = false;
-  if (getKind(Enum) === 'list') {
-    multiple = true;
-    Enum = getReport(Enum.meta.type).innerType;
-  }
-
-  var label = !Nil.is(opts.label) ? opts.label :
-    ctx.auto === 'labels' ? ctx.getDefaultLabel() :
-    null;
-
-  var name = opts.name || ctx.getDefaultName();
-
-  var value = !Nil.is(opts.value) ? opts.value :
-    !Nil.is(ctx.value) ? ctx.value :
-    multiple ? [] : null;
-
-  var options = opts.options ? opts.options.slice() : getOptionsOfEnum(Enum);
-
-  // sort opts
-  if (opts.order) {
-    options.sort(api.Order.getComparator(opts.order));
-  }
-
-  // add a `null` option in first position
-  var nullOption = opts.nullOption || {value: '', text: '-'};
-  if (!multiple) {
-    options.unshift(nullOption);
-  }
-
-  var template = opts.template || ctx.templates.select;
-
-  return React.createClass({
-
-    displayName: 'Select',
-
-    getInitialState: function () {
-      return {
-        hasError: !!opts.hasError,
-        value: value
-      };
-    },
-
-    onChange: function (evt) {
-
-      var value;
-
-      if (multiple) {
-        value = [];
-        var options = evt.target.options;
-        for (var i = 0, len = options.length; i < len ; i++ ) {
-          if (options[i].selected) {
-            value.push(options[i].value);
-          }
-        }
-      } else {
-        value = evt.target.value;
-        if (value === nullOption.value) {
-          value = null;
-        }
-      }
-
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
-      this.setState({value: value});
-    },
-
-    getValue: function () {
-      var result = t.validate(this.state.value, ctx.report.type);
-      this.setState({
-        hasError: !result.isValid(),
-        value: result.value
-      });
-      return result;
-    },
-
-    render: function () {
-      return compile(template(new theme.Select({
-        config: merge(ctx.config, opts.config),
-        disabled: opts.disabled,
-        error: getError(opts.error, this.state),
-        hasError: this.state.hasError,
-        help: opts.help,
-        label: label,
-        name: name,
-        multiple: multiple,
-        onChange: this.onChange,
-        options: options,
-        value: this.state.value
-      })));
-    }
-  });
-}
-
-function radio(opts, ctx) {
-
-  opts = new api.Radio(opts || {});
-
-  var label = !Nil.is(opts.label) ? opts.label :
-    ctx.auto === 'labels' ? ctx.getDefaultLabel() :
-    null;
-
-  var name = opts.name || ctx.getDefaultName();
-
-  var value = !Nil.is(opts.value) ? opts.value : !Nil.is(ctx.value) ? ctx.value : null;
-
-  var options = opts.options ? opts.options.slice() : getOptionsOfEnum(ctx.report.innerType);
-
-  // sort opts
-  if (opts.order) {
-    options.sort(api.Order.getComparator(opts.order));
-  }
-
-  var template = opts.template || ctx.templates.radio;
-
-  return React.createClass({
-
-    displayName: 'Radio',
-
-    getInitialState: function () {
-      return {
-        hasError: !!opts.hasError,
-        value: value
-      };
-    },
-
-    onChange: function (value) {
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
-      this.setState({value: value});
-    },
-
-    getValue: function () {
-      var result = t.validate(this.state.value, ctx.report.type);
-      this.setState({
-        hasError: !result.isValid(),
-        value: result.value
-      });
-      return result;
-    },
-
-    render: function () {
-      return compile(template(new theme.Radio({
-        config: merge(ctx.config, opts.config),
-        disabled: opts.disabled,
-        error: getError(opts.error, this.state),
-        hasError: this.state.hasError,
-        help: opts.help,
-        label: label,
-        name: name,
-        onChange: this.onChange,
-        options: options,
-        value: this.state.value
-      })));
-    }
-  });
-}
-
-function struct(opts, ctx) {
-
-  opts = new api.Struct(opts || {});
-  var report = ctx.report;
-
-  assert(!report.maybe, 'maybe structs are not (yet) supported');
-
-  var props = report.innerType.meta.props;
-  var order = opts.order || Object.keys(props);
-  var auto =  opts.auto || ctx.auto;
-  var i18n =  opts.i18n || ctx.i18n;
-  var value = opts.value || ctx.value || {};
-
-  var label = !Nil.is(opts.label) ? opts.label :
-    ctx.auto !== 'none' ? ctx.getDefaultLabel() :
-    null;
-
-  var config = merge(ctx.config, opts.config);
-
-  var templates = merge(ctx.templates, opts.templates);
-
-  var components = {};
-  var fields = opts.fields || {};
-  order.forEach(function (prop) {
-    if (props.hasOwnProperty(prop)) {
-
-      var propType = props[prop];
-      var propOpts = fields[prop] || {};
-      var factory = getFactory(propType, propOpts);
-      var Component = factory(propOpts, new Context({
-        auto:       auto,
-        config:     config,
-        i18n:       i18n,
-        label:      humanize(prop),
-        path:       ctx.path.concat(prop),
-        report:     new getReport(propType),
-        templates:  templates,
-        value:      value[prop]
-      }));
-
-      components[prop] = Component;
-
-    }
-  });
-
-  return React.createClass({
-
-    displayName: 'Struct',
-
-    getInitialState: function () {
-      return {
-        hasError: !!opts.hasError,
-        value: value
-      };
-    },
-
-    onFieldChange: function (fieldName, fieldValue) {
-      var value = mixin({}, this.state.value);
-      value[fieldName] = fieldValue;
-      this.onChange(value);
-    },
-
-    onChange: function (value) {
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
-      this.setState({value: value});
-    },
-
-    getValue: function () {
-
-      var value = {};
-      var errors = [];
-      var hasError = false;
-      var result;
-
-      for (var ref in this.refs) {
-        if (this.refs.hasOwnProperty(ref)) {
-          result = this.refs[ref].getValue();
-          errors = errors.concat(result.errors);
-          value[ref] = result.value;
-        }
-      }
-
-      if (errors.length === 0) {
-        value = new report.innerType(value);
-        // handle subtype
-        if (report.subtype && errors.length === 0) {
-          result = t.validate(value, report.type);
-          hasError = !result.isValid();
-          errors = errors.concat(result.errors);
-        }
-      }
-
-      this.setState({hasError: hasError, value: value});
-      return new ValidationResult({errors: errors, value: value});
-    },
-
-    render: function () {
-
-      var inputs = {};
-      for (var name in components) {
-        if (components.hasOwnProperty(name)) {
-          inputs[name] = React.createElement(components[name], {
-            key: name,
-            onChange: this.onFieldChange.bind(this, name),
-            ref: name // exploit the `name` uniqueness for keys
-          });
-        }
-      }
-
-      return compile(templates.struct(new theme.Struct({
-        config: config,
-        disabled: opts.disabled,
-        error: getError(opts.error, this.state),
-        hasError: this.state.hasError,
-        help: opts.help,
-        inputs: inputs,
-        label: label,
-        order: order,
-        value: this.state.value
-      })));
-    }
-  });
-}
-
-function list(opts, ctx) {
-
-  opts = new api.List(opts || {});
-  var report = ctx.report;
-
-  assert(!report.maybe, 'maybe lists are not (yet) supported');
-
-  var auto = opts.auto || ctx.auto;
-  var i18n = opts.i18n || ctx.i18n;
-  var value = opts.value || ctx.value || [];
-
-  var label = !Nil.is(opts.label) ? opts.label :
-    ctx.auto !== 'none' ? ctx.getDefaultLabel() :
-    null;
-
-  var config = merge(ctx.config, opts.config);
-
-  var templates = merge(ctx.templates, opts.templates);
-
-  var itemType = report.innerType.meta.type;
-  var itemOpts = opts.item || {};
-  var itemFactory = getFactory(itemType, itemOpts);
-  var getComponent = function (value, i) {
-    return itemFactory(itemOpts, new Context({
-      templates: templates,
-      i18n: i18n,
-      report: getReport(itemType),
-      path: ctx.path,
-      auto: auto,
-      label: null,
-      value: value,
-      config: config
-    }));
-  };
-
-  // for lists it's very important to set the keys correctly
-  // otherwise React will re-render the inputs
-  // losing their states (hasError and value)
-
-  // [mutable]
-  var components = value.map(function (value, i) {
-    return {
-      Component: getComponent(value, i),
-      key: uuid() // every component has a  unique generated key
-    };
-  });
-
-  return React.createClass({
-
-    displayName: 'List',
-
-    getInitialState: function () {
-      return {
-        hasError: !!opts.hasError,
-        value: value
-      };
-    },
-
-    onItemChange: function (itemIndex, itemValue) {
-      var value = this.state.value.slice();
-      value[itemIndex] = itemValue;
-      this.onChange(value);
-    },
-
-    onChange: function (value) {
-      if (this.props.onChange) {
-        this.props.onChange(value);
-      }
-      this.setState({value: value});
-    },
-
-    getValue: function () {
-
-      var value = [];
-      var errors = [];
-      var hasError = false;
-      var result;
-
-      for (var i = 0, len = components.length ; i < len ; i++ ) {
-        if (this.refs.hasOwnProperty(i)) {
-          result = this.refs[i].getValue();
-          errors = errors.concat(result.errors);
-          value.push(result.value);
-        }
-      }
-
-      // handle subtype
-      if (report.subtype && errors.length === 0) {
-        result = t.validate(value, report.type);
-        hasError = !result.isValid();
-        errors = errors.concat(result.errors);
-      }
-
-      this.setState({hasError: hasError, value: value});
-      return new ValidationResult({errors: errors, value: value});
-    },
-
-    addItem: function (evt) {
-      evt.preventDefault();
-      components.push({
-        Component: getComponent(null, components.length),
-        key: uuid()
-      });
-      var value = this.state.value.slice();
-      value.push(null);
-      this.onChange(value);
-    },
-
-    removeItem: function (i, evt) {
-      evt.preventDefault();
-      components.splice(i, 1);
-      var value = this.state.value.slice();
-      value.splice(i, 1);
-      this.onChange(value);
-    },
-
-    moveUpItem: function (i, evt) {
-      evt.preventDefault();
-      if (i > 0) {
-        move(components, i, i - 1);
-        this.onChange(move(this.state.value.slice(), i, i - 1));
-      }
-    },
-
-    moveDownItem: function (i, evt) {
-      evt.preventDefault();
-      if (i < components.length - 1) {
-        move(components, i, i + 1);
-        this.onChange(move(this.state.value.slice(), i, i + 1));
-      }
-    },
-
-    render: function () {
-
-      var items = components.map(function getItem(item, i) {
-
-        var buttons = [];
-        if (!opts.disabledRemove) { buttons.push({ label: i18n.remove, click: this.removeItem.bind(this, i) }); }
-        if (!opts.disableOrder)   { buttons.push({ label: i18n.up, click: this.moveUpItem.bind(this, i) }); }
-        if (!opts.disableOrder)   { buttons.push({ label: i18n.down, click: this.moveDownItem.bind(this, i) }); }
-
-        return {
-          input: React.createElement(item.Component, {
-            key: item.key,
-            onChange: this.onItemChange.bind(this, i),
-            ref: i
-          }),
-          key: item.key,
-          buttons: buttons
-        };
-      }.bind(this));
-
-      return compile(templates.list(new theme.List({
-        add: opts.disableAdd ? null : {
-          label: i18n.add,
-          click: this.addItem
-        },
-        config: config,
-        disabled: opts.disabled,
-        error: getError(opts.error, this.state),
-        hasError: this.state.hasError,
-        help: opts.help,
-        items: items,
-        label: label,
-        value: this.state.value
-      })));
-    }
-  });
-}
-
-//
-// configuration
-//
-
-config.kinds = {
-  irriducible: function (type, opts) {
-    var name = getName(type);
-    if (t.Func.is(config.irriducibles[name])) {
-      return config.irriducibles[name](opts);
-    }
-    return textbox; // fallback on textbox
-  },
-  enums:    function () { return select; },
-  struct:   function () { return struct; },
-  list:     function () { return list; },
-  maybe:    function (type, opts) { return getFactory(type.meta.type, opts); },
-  subtype:  function (type, opts) { return getFactory(type.meta.type, opts); }
-};
-
-config.irriducibles = {
-  Bool: function () { return checkbox; }
-};
-
-config.transformers = {
-  Num: new api.Transformer({
-    format: function (value) {
-      return Nil.is(value) ? value : String(value);
-    },
-    parse: function (value) {
-      var n = parseFloat(value);
-      var isNumeric = (value - n + 1) >= 0;
-      return isNumeric ? n : value;
-    }
-  })
-};
-
-module.exports = {
-  getFactory: getFactory,
-  textbox:    textbox,
-  checkbox:   checkbox,
-  select:     select,
-  radio:      radio,
-  struct:     struct,
-  list:       list
-};
-
-},{"./config":3,"./protocols/api":7,"./protocols/theme":8,"./util/getError":11,"./util/getOptionsOfEnum":12,"./util/getReport":13,"./util/humanize":14,"./util/merge":15,"./util/move":16,"./util/uuid":17,"react":"react","tcomb-validation":19,"uvdom/react":43}],6:[function(require,module,exports){
-var t = require('tcomb-validation');
-var create = require('./create');
-var config = require('./config');
-var factories = require('./factories');
-
-t.form = t.util.mixin({
-  create: create,
-  config: config
-}, factories);
-
-module.exports = t;
-},{"./config":3,"./create":4,"./factories":5,"tcomb-validation":19}],7:[function(require,module,exports){
+},{"./lib":14,"./lib/skins/bootstrap":16}],3:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
 var t = require('tcomb-validation');
 
-var Any = t.Any;
 var Str = t.Str;
 var Bool = t.Bool;
 var Func = t.Func;
@@ -839,6 +80,7 @@ var struct = t.struct;
 var union = t.union;
 
 var Auto = t.enums.of('placeholders labels none', 'Auto');
+Auto.defaultValue = 'labels';
 
 // internationalization
 var I18n = struct({
@@ -860,35 +102,18 @@ var Context = struct({
   auto: Auto,
   config: maybe(Obj),
   i18n: I18n,
-  label: maybe(Str),
-  path: list(union([Str, t.Num])),
+  label: maybe(Str), // must be a string because of `i18n.optional` concatenation
+  name: maybe(Str),
   report: Report,
-  templates: Obj,
-  value: Any
+  templates: Obj
 }, 'Context');
-
-/*
-
-  Proposals:
-
-  - RFC 6901
-  JavaScript Object Notation (JSON) Pointer
-  http://tools.ietf.org/html/rfc6901
-
-  - W3C HTML JSON form submission
-  http://www.w3.org/TR/html-json-forms/
-
-*/
-Context.prototype.getDefaultName = function () {
-  return this.path.join('/');
-};
 
 Context.prototype.getDefaultLabel = function () {
   if (!this.label) { return null; }
   return this.label + (this.report.maybe ? this.i18n.optional : '');
 };
 
-var ReactElement = t.irriducible('ReactElement', React.isValidElement);
+var ReactElement = t.irreducible('ReactElement', React.isValidElement);
 
 var Label = union([Str, ReactElement], 'Label');
 
@@ -916,35 +141,37 @@ SelectOption.dispatch = function (x) {
 var TypeAttr = t.enums.of('textarea hidden text password color date datetime datetime-local email month number range search tel time url week', 'TypeAttr');
 
 var Transformer = struct({
-  format: Func,
-  parse: Func
+  format: Func, // from value to string
+  parse: Func   // from string to value
 }, 'Transformer');
 
 var Textbox = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
   disabled: maybe(Bool),
   error: maybe(ErrorMessage),
   hasError: maybe(Bool),
   help: maybe(Label),
+  id: maybe(Str),
   label: maybe(Label),
   name: maybe(t.Str),
   placeholder: maybe(Str),
   template: maybe(Func),
   transformer: maybe(Transformer),
-  type: maybe(TypeAttr),
-  value: Any
+  type: maybe(TypeAttr)
 }, 'Textbox');
 
 var Checkbox = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
   disabled: maybe(Bool),
   hasError: maybe(Bool),
   help: maybe(Label),
+  id: maybe(Str),
   error: maybe(ErrorMessage),
   label: maybe(Label),
   name: maybe(t.Str),
-  template: maybe(Func),
-  value: maybe(Bool)
+  template: maybe(Func)
 }, 'Checkbox');
 
 function asc(a, b) {
@@ -962,33 +189,38 @@ Order.getComparator = function (order) {
   return Order.meta.map[order];
 };
 
+// handle multiple attribute
+var SelectValue = union([Str, list(Str)], 'SelectValue');
+
 var Select = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
   disabled: maybe(Bool),
   hasError: maybe(Bool),
   help: maybe(Label),
+  id: maybe(Str),
   error: maybe(ErrorMessage),
   label: maybe(Label),
   name: maybe(t.Str),
   nullOption: maybe(Option),
   options: maybe(list(SelectOption)),
   order: maybe(Order),
-  template: maybe(Func),
-  value: maybe(Str)
+  template: maybe(Func)
 }, 'Select');
 
 var Radio = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
   disabled: maybe(Bool),
   hasError: maybe(Bool),
   help: maybe(Label),
+  id: maybe(Str),
   error: maybe(ErrorMessage),
   label: maybe(Label),
   name: maybe(t.Str),
   options: maybe(list(SelectOption)),
   order: maybe(Order),
-  template: maybe(Func),
-  value: maybe(Str)
+  template: maybe(Func)
 }, 'Select');
 
 var Struct = struct({
@@ -1000,10 +232,9 @@ var Struct = struct({
   hasError: maybe(Bool),
   help: maybe(Label),
   error: maybe(ErrorMessage),
-  label: maybe(Label),
+  legend: maybe(Label),
   order: maybe(list(Label)),
-  templates: maybe(Obj),
-  value: maybe(Obj)
+  templates: maybe(Obj)
 }, 'Struct');
 
 var List = struct({
@@ -1018,12 +249,12 @@ var List = struct({
   hasError: maybe(Bool),
   help: maybe(Label),
   error: maybe(ErrorMessage),
-  label: maybe(Label),
-  templates: maybe(Obj),
-  value: maybe(t.Arr)
+  legend: maybe(Label),
+  templates: maybe(Obj)
 }, 'List');
 
 module.exports = {
+  Auto: Auto,
   I18n: I18n,
   Context: Context,
   ReactElement: ReactElement,
@@ -1037,16 +268,917 @@ module.exports = {
   Textbox: Textbox,
   Checkbox: Checkbox,
   Select: Select,
+  SelectValue: SelectValue,
   Radio: Radio,
   Struct: Struct,
   List: List
 };
-},{"react":"react","tcomb-validation":19}],8:[function(require,module,exports){
+
+
+},{"react":"react","tcomb-validation":28}],4:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
 var t = require('tcomb-validation');
-var Any = t.Any;
+var api = require('../api');
+var skin = require('../skin');
+var shouldComponentUpdate = require('./shouldComponentUpdate');
+var getError = require('../util/getError');
+var merge = require('../util/merge');
+var uuid = require('../util/uuid');
+var compile = require('uvdom/react').compile;
+var debug = require('debug')('component:Checkbox');
+
+function normalize(value) {
+  return !!t.maybe(t.Bool)(value);
+}
+
+var Checkbox = React.createClass({
+
+  displayName: 'Checkbox',
+
+  getInitialState: function () {
+    return {
+      hasError: false,
+      value: normalize(this.props.value)
+    };
+  },
+
+  componentWillReceiveProps: function (props) {
+    this.setState({value: normalize(props.value)});
+  },
+
+  shouldComponentUpdate: shouldComponentUpdate,
+
+  onChange: function (value) {
+    value = normalize(value);
+    this.props.onChange(value);
+    this.setState({value: value});
+  },
+
+  getValue: function () {
+    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    this.setState({hasError: !result.isValid()});
+    return result;
+  },
+
+  getLocals: function () {
+    var opts = new api.Checkbox(this.props.options || {});
+    var ctx = this.props.ctx;
+    t.assert(!ctx.report.maybe, 'maybe booleans are not supported');
+    t.assert(ctx.report.innerType === t.Bool, 'checkboxes support only booleans');
+    var id = opts.id || this._rootNodeID || uuid();
+    var name = opts.name || ctx.name || id;
+    debug('render() called for `%s` field', name);
+
+    // handle labels
+    var label = opts.label || ctx.getDefaultLabel(); // checkboxes must have a label
+
+    var value = this.state.value;
+    return {
+      autoFocus: opts.autoFocus,
+      config: merge(ctx.config, opts.config),
+      disabled: opts.disabled,
+      error: getError(opts.error, value),
+      hasError: opts.hasError || this.state.hasError,
+      help: opts.help,
+      id: id,
+      label: label,
+      name: name,
+      onChange: this.onChange,
+      value: value,
+      template: opts.template || ctx.templates.checkbox
+    };
+  },
+
+  render: function () {
+    var locals = this.getLocals();
+    return compile(locals.template(new skin.Checkbox(locals)));
+  }
+
+});
+
+module.exports = Checkbox;
+
+
+},{"../api":3,"../skin":15,"../util/getError":18,"../util/merge":22,"../util/uuid":24,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":28,"uvdom/react":54}],5:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var getComponent = require('../getComponent');
+var api = require('../api');
+var getReport = require('../util/getReport');
+var config =  require('../config');
+
+function noop() {}
+
+var Form = React.createClass({
+
+  displayName: 'Form',
+
+  // the public api returns `null` if validation failed
+  // unless the optional boolean argument `raw` is set to `true`
+  getValue: function (raw) {
+    var result = this.refs.input.getValue();
+    if (raw === true) { return result; }
+    if (result.isValid()) { return result.value; }
+    return null;
+  },
+
+  render: function () {
+    var type = this.props.type;
+    var options = this.props.options;
+    var ctx = new api.Context({
+      auto: api.Auto.defaultValue,
+      i18n: config.i18n,
+      report: getReport(type),
+      templates: config.templates
+    });
+    var factory = React.createFactory(getComponent(type, options));
+    return factory({
+      ref: 'input',
+      options: options,
+      value: this.props.value,
+      onChange: this.props.onChange || noop,
+      ctx: ctx
+    });
+  }
+
+});
+
+module.exports = Form;
+
+
+},{"../api":3,"../config":12,"../getComponent":13,"../util/getReport":20,"react":"react"}],6:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var t = require('tcomb-validation');
+var shouldComponentUpdate = require('./shouldComponentUpdate');
+var getComponent = require('../getComponent');
+var api = require('../api');
+var skin = require('../skin');
+var getError = require('../util/getError');
+var merge = require('../util/merge');
+var move = require('../util/move');
+var uuid = require('../util/uuid');
+var getReport = require('../util/getReport');
+var compile = require('uvdom/react').compile;
+var debug = require('debug')('component:List');
+
+function justify(value, keys) {
+  if (value.length === keys.length) { return keys; }
+  var ret = [];
+  for (var i = 0, len = value.length ; i < len ; i++ ) {
+    ret[i] = keys[i] || uuid();
+  }
+  return ret;
+}
+
+function normalize(value) {
+  t.maybe(t.Arr)(value);
+  return value || [];
+}
+
+var List = React.createClass({
+
+  displayName: 'List',
+
+  getInitialState: function () {
+    var value = normalize(this.props.value);
+    return {
+      hasError: false,
+      value: value,
+      keys: value.map(uuid)
+    };
+  },
+
+  componentWillReceiveProps: function (props) {
+    var value = normalize(props.value);
+    this.setState({
+      value: value,
+      keys: justify(value, this.state.keys)
+    });
+  },
+
+  shouldComponentUpdate: shouldComponentUpdate,
+
+  onChange: function (value, keys) {
+    this.props.onChange(value);
+    this.setState({value: value, keys: keys});
+  },
+
+  getValue: function () {
+    var report = this.props.ctx.report;
+    var value = [];
+    var errors = [];
+    var hasError = false;
+    var result;
+
+    for (var i = 0, len = this.state.value.length ; i < len ; i++ ) {
+      result = this.refs[i].getValue();
+      errors = errors.concat(result.errors);
+      value.push(result.value);
+    }
+
+    // handle subtype
+    if (report.subtype && errors.length === 0) {
+      result = t.validate(value, report.type);
+      hasError = !result.isValid();
+      errors = errors.concat(result.errors);
+    }
+
+    this.setState({hasError: hasError});
+    return new t.ValidationResult({errors: errors, value: value});
+  },
+
+  addItem: function (evt) {
+    evt.preventDefault();
+    var value = this.state.value.concat(null);
+    var keys = this.state.keys.concat(uuid());
+    this.onChange(value, keys);
+  },
+
+  onItemChange: function (itemIndex, itemValue) {
+    var value = this.state.value.slice();
+    value[itemIndex] = itemValue;
+    this.onChange(value, this.state.keys);
+  },
+
+  removeItem: function (i, evt) {
+    evt.preventDefault();
+    var value = this.state.value.slice();
+    value.splice(i, 1);
+    var keys = this.state.keys.slice();
+    keys.splice(i, 1);
+    this.onChange(value, keys);
+  },
+
+  moveUpItem: function (i, evt) {
+    evt.preventDefault();
+    if (i > 0) {
+      this.onChange(
+        move(this.state.value.slice(), i, i - 1),
+        move(this.state.keys.slice(), i, i - 1)
+      );
+    }
+  },
+
+  moveDownItem: function (i, evt) {
+    evt.preventDefault();
+    if (i < this.state.value.length - 1) {
+      this.onChange(
+        move(this.state.value.slice(), i, i + 1),
+        move(this.state.keys.slice(), i, i + 1)
+      );
+    }
+  },
+
+  getLocals: function () {
+    var opts = new api.List(this.props.options || {});
+    var ctx = this.props.ctx;
+    debug('render() called for `%s` field', ctx.name);
+    t.assert(!ctx.report.maybe, 'maybe lists are not supported');
+    var auto = opts.auto || ctx.auto;
+    var i18n = opts.i18n || ctx.i18n;
+    var value = t.Arr(this.state.value || []);
+
+    // handle legend
+    var legend = opts.legend; // always use the option value if is manually set
+    if (!legend && ctx.auto === 'labels') {
+      // add automatically a legend only if there is not a legend
+      // and the 'labels' auto option is turned on
+      legend = ctx.getDefaultLabel();
+    }
+
+    var config = merge(ctx.config, opts.config);
+    var templates = merge(ctx.templates, opts.templates);
+    var itemType = ctx.report.innerType.meta.type;
+    var factory = React.createFactory(getComponent(itemType, opts.item));
+    var items = value.map(function (value, i) {
+      var buttons = [];
+      if (!opts.disabledRemove) { buttons.push({ label: i18n.remove, click: this.removeItem.bind(this, i) }); }
+      if (!opts.disableOrder)   { buttons.push({ label: i18n.up, click: this.moveUpItem.bind(this, i) }); }
+      if (!opts.disableOrder)   { buttons.push({ label: i18n.down, click: this.moveDownItem.bind(this, i) }); }
+      return {
+        input: factory({
+          ref: i,
+          type: itemType,
+          options: opts.item,
+          value: value,
+          onChange: this.onItemChange.bind(this, i),
+          ctx: new api.Context({
+            auto:       auto,
+            config:     config,
+            i18n:       i18n,
+            label:      null,
+            name:       ctx.name + '[' + i + ']',
+            report:     new getReport(itemType),
+            templates:  templates
+          })
+        }),
+        key: this.state.keys[i],
+        buttons: buttons
+      };
+    }.bind(this));
+    return {
+      add: opts.disableAdd ? null : {
+        label: i18n.add,
+        click: this.addItem
+      },
+      config: config,
+      disabled: opts.disabled,
+      error: getError(opts.error, value),
+      hasError: opts.hasError || this.state.hasError,
+      help: opts.help,
+      items: items,
+      legend: legend,
+      value: value,
+      templates: templates
+    };
+  },
+
+  render: function () {
+    var locals = this.getLocals();
+    return compile(locals.templates.list(new skin.List(locals)));
+  }
+
+});
+
+module.exports = List;
+
+
+},{"../api":3,"../getComponent":13,"../skin":15,"../util/getError":18,"../util/getReport":20,"../util/merge":22,"../util/move":23,"../util/uuid":24,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":28,"uvdom/react":54}],7:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var t = require('tcomb-validation');
+var api = require('../api');
+var skin = require('../skin');
+var shouldComponentUpdate = require('./shouldComponentUpdate');
+var getError = require('../util/getError');
+var merge = require('../util/merge');
+var uuid = require('../util/uuid');
+var getOptionsOfEnum = require('../util/getOptionsOfEnum');
+var compile = require('uvdom/react').compile;
+var debug = require('debug')('component:Radio');
+
+function normalize(value) {
+  return t.maybe(api.SelectValue)(value);
+}
+
+var Radio = React.createClass({
+
+  displayName: 'Radio',
+
+  getInitialState: function () {
+    return {
+      hasError: false,
+      value: normalize(this.props.value)
+    };
+  },
+
+  componentWillReceiveProps: function (props) {
+    this.setState({value: normalize(props.value)});
+  },
+
+  shouldComponentUpdate: shouldComponentUpdate,
+
+  onChange: function (value) {
+    value = normalize(value);
+    this.props.onChange(value);
+    this.setState({value: value});
+  },
+
+  getValue: function () {
+    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    this.setState({hasError: !result.isValid()});
+    return result;
+  },
+
+  getLocals: function () {
+    var opts = new api.Radio(this.props.options || {});
+    var ctx = this.props.ctx;
+    var id = opts.id || this._rootNodeID || uuid();
+    var name = opts.name || ctx.name || id;
+    debug('render() called for `%s` field', name);
+
+    // handle labels
+    var label = opts.label; // always use the option value if is manually set
+    if (!label && ctx.auto === 'labels') {
+      // add automatically a label only if there is not a label
+      // and the 'labels' auto option is turned on
+      label = ctx.getDefaultLabel();
+    }
+
+    var options = opts.options ? opts.options.slice() : getOptionsOfEnum(ctx.report.innerType);
+    // sort opts
+    if (opts.order) {
+      options.sort(api.Order.getComparator(opts.order));
+    }
+    var value = this.state.value;
+    return {
+      autoFocus: opts.autoFocus,
+      config: merge(ctx.config, opts.config),
+      disabled: opts.disabled,
+      error: getError(opts.error, value),
+      hasError: opts.hasError || this.state.hasError,
+      help: opts.help,
+      id: id,
+      label: label,
+      name: name,
+      onChange: this.onChange,
+      options: options,
+      value: value,
+      template: opts.template || ctx.templates.radio
+    };
+  },
+
+  render: function () {
+    var locals = this.getLocals();
+    return compile(locals.template(new skin.Radio(locals)));
+  }
+
+});
+
+module.exports = Radio;
+
+
+},{"../api":3,"../skin":15,"../util/getError":18,"../util/getOptionsOfEnum":19,"../util/merge":22,"../util/uuid":24,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":28,"uvdom/react":54}],8:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var t = require('tcomb-validation');
+var api = require('../api');
+var skin = require('../skin');
+var shouldComponentUpdate = require('./shouldComponentUpdate');
+var getError = require('../util/getError');
+var getReport = require('../util/getReport');
+var merge = require('../util/merge');
+var uuid = require('../util/uuid');
+var getOptionsOfEnum = require('../util/getOptionsOfEnum');
+var compile = require('uvdom/react').compile;
+var debug = require('debug')('component:Select');
+
+function normalize(value) {
+  return t.maybe(api.SelectValue)(value);
+}
+
+var Select = React.createClass({
+
+  displayName: 'Select',
+
+  getInitialState: function () {
+    return {
+      hasError: false,
+      value: normalize(this.props.value)
+    };
+  },
+
+  componentWillReceiveProps: function (props) {
+    this.setState({value: normalize(props.value)});
+  },
+
+  shouldComponentUpdate: shouldComponentUpdate,
+
+  onChange: function (value) {
+    value = normalize(value);
+    this.props.onChange(value);
+    this.setState({value: value});
+  },
+
+  getValue: function () {
+    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    this.setState({hasError: !result.isValid()});
+    return result;
+  },
+
+  getLocals: function () {
+    var opts = new api.Select(this.props.options || {});
+    var ctx = this.props.ctx;
+    var id = opts.id || this._rootNodeID || uuid();
+    var name = opts.name || ctx.name || id;
+    debug('render() called for `%s` field', name);
+    var Enum = ctx.report.innerType;
+    // handle `multiple` attribute
+    var multiple = false;
+    if (Enum.meta.kind === 'list') {
+      multiple = true;
+      Enum = getReport(Enum.meta.type).innerType;
+    }
+
+    // handle labels
+    var label = opts.label; // always use the option value if is manually set
+    if (!label && ctx.auto === 'labels') {
+      // add automatically a label only if there is not a label
+      // and the 'labels' auto option is turned on
+      label = ctx.getDefaultLabel();
+    }
+
+    var value = this.state.value;
+    var options = opts.options ? opts.options.slice() : getOptionsOfEnum(Enum);
+    // sort opts
+    if (opts.order) {
+      options.sort(api.Order.getComparator(opts.order));
+    }
+    // add a `null` option in first position
+    var nullOption = opts.nullOption || {value: '', text: '-'};
+    if (!multiple) {
+      options.unshift(nullOption);
+    }
+    return {
+      autoFocus: opts.autoFocus,
+      config: merge(ctx.config, opts.config),
+      disabled: opts.disabled,
+      error: getError(opts.error, value),
+      hasError: opts.hasError || this.state.hasError,
+      help: opts.help,
+      id: id,
+      label: label,
+      name: name,
+      multiple: multiple,
+      onChange: function (value) {
+        if (value === nullOption.value) {
+          value = null;
+        }
+        this.onChange(value);
+      }.bind(this),
+      options: options,
+      value: value,
+      template: opts.template || ctx.templates.select
+    };
+  },
+
+  render: function () {
+    var locals = this.getLocals();
+    return compile(locals.template(new skin.Select(locals)));
+  }
+
+});
+
+module.exports = Select;
+
+
+},{"../api":3,"../skin":15,"../util/getError":18,"../util/getOptionsOfEnum":19,"../util/getReport":20,"../util/merge":22,"../util/uuid":24,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":28,"uvdom/react":54}],9:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var t = require('tcomb-validation');
+var shouldComponentUpdate = require('./shouldComponentUpdate');
+var getComponent = require('../getComponent');
+var api = require('../api');
+var skin = require('../skin');
+var getError = require('../util/getError');
+var merge = require('../util/merge');
+var humanize = require('../util/humanize');
+var getReport = require('../util/getReport');
+var compile = require('uvdom/react').compile;
+var debug = require('debug')('component:Struct');
+
+function normalize(value) {
+  t.maybe(t.Obj)(value);
+  return value || {};
+}
+
+var Struct = React.createClass({
+
+  displayName: 'Struct',
+
+  getInitialState: function () {
+    return {
+      hasError: false,
+      value: normalize(this.props.value)
+    };
+  },
+
+  componentWillReceiveProps: function (props) {
+    this.setState({value: normalize(props.value)});
+  },
+
+  shouldComponentUpdate: shouldComponentUpdate,
+
+  onChange: function (fieldName, fieldValue) {
+    var value = t.util.mixin({}, this.state.value);
+    value[fieldName] = fieldValue;
+    this.props.onChange(value);
+    this.setState({value: value});
+  },
+
+  getValue: function () {
+    var report = this.props.ctx.report;
+    var value = {};
+    var errors = [];
+    var hasError = false;
+    var result;
+
+    for (var ref in this.refs) {
+      if (this.refs.hasOwnProperty(ref)) {
+        result = this.refs[ref].getValue();
+        errors = errors.concat(result.errors);
+        value[ref] = result.value;
+      }
+    }
+
+    if (errors.length === 0) {
+      value = new report.innerType(value);
+      // handle subtype
+      if (report.subtype && errors.length === 0) {
+        result = t.validate(value, report.type);
+        hasError = !result.isValid();
+        errors = errors.concat(result.errors);
+      }
+    }
+
+    this.setState({hasError: hasError});
+    return new t.ValidationResult({errors: errors, value: value});
+  },
+
+  getLocals: function () {
+    var opts = new api.Struct(this.props.options || {});
+    var ctx = this.props.ctx;
+    debug('render() called for `%s` field', ctx.name);
+    t.assert(!ctx.report.maybe, 'maybe structs are not supported');
+    var auto =  opts.auto || ctx.auto;
+
+    // handle legend
+    var legend = opts.legend; // always use the option value if is manually set
+    if (!legend && ctx.auto === 'labels') {
+      // add automatically a legend only if there is not a legend
+      // and the 'labels' auto option is turned on
+      legend = ctx.getDefaultLabel();
+    }
+
+    var config = merge(ctx.config, opts.config);
+    var value = this.state.value;
+    var props = ctx.report.innerType.meta.props;
+    var i18n =  opts.i18n || ctx.i18n;
+    var templates = merge(ctx.templates, opts.templates);
+    var inputs = {};
+    for (var prop in props) {
+      if (props.hasOwnProperty(prop)) {
+        var propType = props[prop];
+        var propOptions = opts.fields ? opts.fields[prop] : null;
+        inputs[prop] = React.createFactory(getComponent(propType, propOptions))({
+          key: prop,
+          ref: prop,
+          type: propType,
+          options: propOptions,
+          value: value[prop],
+          onChange: this.onChange.bind(this, prop),
+          ctx: new api.Context({
+            auto:       auto,
+            config:     config,
+            i18n:       i18n,
+            label:      humanize(prop),
+            name:       ctx.name ? ctx.name + '[' + prop + ']' : prop,
+            report:     new getReport(propType),
+            templates:  templates
+          })
+        });
+      }
+    }
+    return {
+      config: config,
+      disabled: opts.disabled,
+      error: getError(opts.error, value),
+      hasError: opts.hasError || this.state.hasError,
+      help: opts.help,
+      inputs: inputs,
+      legend: legend,
+      order: opts.order || Object.keys(props),
+      value: value,
+      templates: templates
+    };
+  },
+
+  render: function () {
+    var locals = this.getLocals();
+    return compile(locals.templates.struct(new skin.Struct(locals)));
+  }
+
+});
+
+module.exports = Struct;
+
+
+},{"../api":3,"../getComponent":13,"../skin":15,"../util/getError":18,"../util/getReport":20,"../util/humanize":21,"../util/merge":22,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":28,"uvdom/react":54}],10:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var t = require('tcomb-validation');
+var api = require('../api');
+var skin = require('../skin');
+var shouldComponentUpdate = require('./shouldComponentUpdate');
+var getError = require('../util/getError');
+var merge = require('../util/merge');
+var uuid = require('../util/uuid');
+var config = require('../config');
+var compile = require('uvdom/react').compile;
+var debug = require('debug')('component:Textbox');
+
+function normalize(value) {
+  return (t.Str.is(value) && value.trim() === '') ? null :
+    !t.Nil.is(value) ? value :
+    null;
+}
+
+var Textbox = React.createClass({
+
+  displayName: 'Textbox',
+
+  getInitialState: function () {
+    return {
+      hasError: false,
+      value: normalize(this.props.value)
+    };
+  },
+
+  componentWillReceiveProps: function (props) {
+    this.setState({value: normalize(props.value)});
+  },
+
+  shouldComponentUpdate: shouldComponentUpdate,
+
+  onChange: function (value) {
+    value = normalize(value);
+    this.props.onChange(value);
+    this.setState({value: value});
+  },
+
+  getValue: function () {
+    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    this.setState({hasError: !result.isValid()});
+    return result;
+  },
+
+  // useful for tests
+  getLocals: function () {
+    var opts = new api.Textbox(this.props.options || {});
+    var ctx = this.props.ctx;
+    var id = opts.id || this._rootNodeID || uuid();
+    var name = opts.name || ctx.name || id;
+    debug('render() called for `%s` field', name);
+
+    // handle labels
+    var label = opts.label; // always use the option value if is manually set
+    if (!label && ctx.auto === 'labels') {
+      // add automatically a label only if there is not a label
+      // and the 'labels' auto option is turned on
+      label = ctx.getDefaultLabel();
+    }
+
+    // handle placeholders
+    var placeholder = opts.placeholder; // always use the option value if is manually set
+    if (!label && !placeholder && ctx.auto === 'placeholders') {
+      // add automatically a placeholder only if there is not a label
+      // nor a placeholder manually set and the 'placeholders' auto option is turned on
+      placeholder = ctx.getDefaultLabel();
+    }
+
+    var value = this.state.value;
+    var transformer = opts.transformer || config.transformers[t.util.getName(ctx.report.innerType)];
+    if (transformer) {
+      value = transformer.format(value);
+    }
+    return {
+      autoFocus: opts.autoFocus,
+      config: merge(ctx.config, opts.config),
+      disabled: opts.disabled,
+      error: getError(opts.error, value),
+      hasError: opts.hasError || this.state.hasError,
+      help: opts.help,
+      id: id,
+      label: label,
+      name: name,
+      onChange: function (value) {
+        if (transformer) {
+          value = transformer.parse(value);
+        }
+        this.onChange(value);
+      }.bind(this),
+      placeholder: placeholder,
+      type: opts.type || 'text',
+      value: value,
+      template: opts.template || ctx.templates.textbox
+    };
+  },
+
+  render: function () {
+    var locals = this.getLocals();
+    return compile(locals.template(new skin.Textbox(locals)));
+  }
+
+});
+
+module.exports = Textbox;
+
+
+},{"../api":3,"../config":12,"../skin":15,"../util/getError":18,"../util/merge":22,"../util/uuid":24,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":28,"uvdom/react":54}],11:[function(require,module,exports){
+'use strict';
+
+module.exports = function (nextProps, nextState) {
+  return nextState.value !== this.state.value ||
+    nextState.hasError !== this.state.hasError ||
+    nextProps.value !== this.props.value ||
+    nextProps.options !== this.props.options ||
+    nextProps.ctx.report.type !== this.props.ctx.report.type;
+};
+
+
+},{}],12:[function(require,module,exports){
+'use strict';
+
+var api = require('./api');
+var t = require('tcomb-validation');
+
+var defaultLocaleBundle = new api.I18n({
+  optional: ' (optional)',
+  add: 'Add',
+  remove: 'Remove',
+  up: 'Up',
+  down: 'Down'
+});
+
+var NumberTransformer = new api.Transformer({
+  format: function (value) {
+    return t.Nil.is(value) ? value : String(value);
+  },
+  parse: function (value) {
+    var n = parseFloat(value);
+    var isNumeric = (value - n + 1) >= 0;
+    return isNumeric ? n : value;
+  }
+});
+
+module.exports = {
+  i18n: defaultLocaleBundle,
+  transformers: {
+    Num: NumberTransformer
+  },
+  irreducibles: {
+    Bool: require('./components/Checkbox')
+  }
+};
+
+
+},{"./api":3,"./components/Checkbox":4,"tcomb-validation":28}],13:[function(require,module,exports){
+'use strict';
+
+var t = require('tcomb-validation');
+var config = require('./config');
+
+// here requires must be dynamic since there is a circular
+// dependency between getComponent and the components
+function getComponent(type, options) {
+  if (options && options.factory) {
+    return options.factory;
+  }
+  switch (type.meta.kind) {
+    case 'irreducible' :
+      var name = t.util.getName(type);
+      if (t.Func.is(config.irreducibles[name])) {
+        return config.irreducibles[name];
+      }
+      // fallback on textbox
+      return require('./components/Textbox');
+    case 'struct' :
+      return require('./components/Struct');
+    case 'enums' :
+      return require('./components/Select');
+    case 'list' :
+      return require('./components/List');
+    case 'maybe' :
+    case 'subtype' :
+      return getComponent(type.meta.type, options);
+  }
+}
+
+module.exports = getComponent;
+
+
+},{"./components/List":6,"./components/Select":8,"./components/Struct":9,"./components/Textbox":10,"./config":12,"tcomb-validation":28}],14:[function(require,module,exports){
+var t = require('tcomb-validation');
+
+t.form = {
+  debug:    require('debug'),
+  config:   require('./config'),
+  Form:     require('./components/Form'),
+  Textbox:  require('./components/Textbox'),
+  Select:   require('./components/Select'),
+  Checkbox: require('./components/Checkbox'),
+  Radio:    require('./components/Radio'),
+  Struct:   require('./components/Struct'),
+  List:     require('./components/List')
+};
+
+module.exports = t;
+
+
+},{"./components/Checkbox":4,"./components/Form":5,"./components/List":6,"./components/Radio":7,"./components/Select":8,"./components/Struct":9,"./components/Textbox":10,"./config":12,"debug":25,"tcomb-validation":28}],15:[function(require,module,exports){
+'use strict';
+
+var React = require('react');
+var t = require('tcomb-validation');
 var Str = t.Str;
 var Bool = t.Bool;
 var Func = t.Func;
@@ -1056,7 +1188,7 @@ var list = t.list;
 var struct = t.struct;
 var union = t.union;
 
-var ReactElement = t.irriducible('ReactElement', React.isValidElement);
+var ReactElement = t.irreducible('ReactElement', React.isValidElement);
 
 var Label = union([Str, ReactElement], 'Label');
 
@@ -1082,57 +1214,70 @@ SelectOption.dispatch = function (x) {
 var TypeAttr = t.enums.of('textarea hidden text password color date datetime datetime-local email month number range search tel time url week', 'TypeAttr');
 
 var Textbox = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
-  disabled: maybe(Bool),
-  error: maybe(Label),
-  hasError: maybe(Bool),
-  help: maybe(Label),
-  label: maybe(Label),
-  name: Str,
-  onChange: Func,
-  placeholder: maybe(Str),
-  type: TypeAttr,
-  value: Any
+  disabled: maybe(Bool),    // should be disabled
+  error: maybe(Label),      // should show an error
+  hasError: maybe(Bool),    // if true should show an error state
+  help: maybe(Label),       // should show an help message
+  id: Str,                  // should use this as id attribute and as htmlFor label attribute
+  label: maybe(Label),      // should show a label
+  name: Str,                // should use this as name attribute
+  onChange: Func,           // should call this function with the changed value
+  placeholder: maybe(Str),  // should show a placeholder
+  type: TypeAttr,           // should use this as type attribute
+  value: t.Any              // should use this as value attribute
 }, 'Textbox');
 
 var Checkbox = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
   disabled: maybe(Bool),
   error: maybe(Label),
   hasError: maybe(Bool),
   help: maybe(Label),
-  label: Label, // checkboxes must always have a label
+  id: Str,                  // should use this as id attribute and as htmlFor label attribute
+  label: Label,             // checkboxes must always have a label
   name: Str,
   onChange: Func,
   value: Bool
 }, 'Checkbox');
 
+// handle multiple attribute
+var SelectValue = union([Str, list(Str)], 'SelectValue');
+
 var Select = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
   error: maybe(Label),
   disabled: maybe(Bool),
   hasError: maybe(Bool),
   help: maybe(Label),
+  id: Str,                  // should use this as id attribute and as htmlFor label attribute
   label: maybe(Label),
   multiple: maybe(Bool),
   name: Str,
   onChange: Func,
   options: list(SelectOption),
-  value: maybe(union([Str, list(Str)])) // handle multiple
+  value: maybe(SelectValue)
 }, 'Select');
 
 var Radio = struct({
+  autoFocus: maybe(Bool),
   config: maybe(Obj),
   disabled: maybe(Bool),
   error: maybe(Label),
   hasError: maybe(Bool),
   help: maybe(Label),
+  id: Str,
   label: maybe(Label),
   name: Str,
   onChange: Func,
   options: list(Option),
   value: maybe(Str)
 }, 'Radio');
+
+var StructValue = t.dict(Str, t.Any, 'StructValue');
 
 var Struct = struct({
   config: maybe(Obj),
@@ -1141,9 +1286,9 @@ var Struct = struct({
   help: maybe(Label),
   hasError: maybe(Bool),
   inputs: t.dict(Str, ReactElement),
-  label: maybe(Label),
+  legend: maybe(Label),
   order: list(Label),
-  value: Any
+  value: maybe(StructValue)
 }, 'Struct');
 
 var Button = struct({
@@ -1165,8 +1310,8 @@ var List = struct({
   hasError: maybe(Bool),
   help: maybe(Label),
   items: list(ListItem),
-  label: maybe(Label),
-  value: Any
+  legend: maybe(Label),
+  value: maybe(list(t.Any))
 }, 'List');
 
 module.exports = {
@@ -1180,15 +1325,16 @@ module.exports = {
   Struct: Struct,
   List: List
 };
-},{"react":"react","tcomb-validation":19}],9:[function(require,module,exports){
+
+
+},{"react":"react","tcomb-validation":28}],16:[function(require,module,exports){
 'use strict';
 
 var t = require('tcomb-validation');
-var theme = require('../protocols/theme');
-var Label = theme.Label;
+var skin = require('../../skin');
+var Label = skin.Label;
 var uform = require('uvdom-bootstrap/form');
 var maybe = t.maybe;
-var getHelpBlock = uform.getHelpBlock;
 var getFieldset = uform.getFieldset;
 var getFormGroup = uform.getFormGroup;
 var getAddon = uform.getAddon;
@@ -1272,35 +1418,38 @@ var ListConfig = t.struct({
   horizontal: maybe(Breakpoints)
 }, 'ListConfig');
 
-function getLabel(locals, breakpoints) {
-  if (!locals.label) { return; }
+function getLabel(opts) {
+  if (!opts.label) { return; }
 
   var align = null;
   var className = null;
 
-  if (breakpoints) {
+  if (opts.breakpoints) {
     align = 'right';
-    className = breakpoints.getLabelClassName();
+    className = opts.breakpoints.getLabelClassName();
   }
 
   return uform.getLabel({
-    label: locals.label,
     align: align,
-    className: className
+    className: className,
+    htmlFor: opts.htmlFor,
+    id: opts.id,
+    label: opts.label
   });
 }
 
 function getHelp(locals) {
   if (!locals.help) { return; }
-  return getHelpBlock({
-    help: locals.help
+  return uform.getHelpBlock({
+    help: locals.help,
+    id: locals.id + '-tip'
   });
 }
 
 function getError(locals) {
-  if (!locals.error) { return; }
-  return getHelpBlock({
-    help: locals.error,
+  if (!locals.hasError || !locals.error) { return; }
+  return uform.getErrorBlock({
+    error: locals.error,
     hasError: locals.hasError
   });
 }
@@ -1311,11 +1460,12 @@ function getHiddenTextbox(locals) {
     attrs: {
       type: 'hidden',
       value: locals.value,
-      name: locals.name,
-      ref: locals.ref
+      name: locals.name
     },
     events: {
-      change: locals.onChange
+      change: function (evt) {
+        locals.onChange(evt.target.value);
+      }
     }
   };
 }
@@ -1329,13 +1479,17 @@ function textbox(locals) {
   }
 
   var control = uform.getTextbox({
+    autoFocus: locals.autoFocus,
     type: locals.type,
     value: locals.value,
     disabled: locals.disabled,
-    onChange: locals.onChange,
+    'aria-describedby': locals.help ? locals.id + '-tip' : null,
+    id: locals.label ? locals.id : null,
+    onChange: function (evt) {
+      locals.onChange(evt.target.value);
+    },
     placeholder: locals.placeholder,
     name: locals.name,
-    ref: locals.ref,
     size: config.size
   });
 
@@ -1348,7 +1502,11 @@ function textbox(locals) {
   }
 
   var horizontal = config.horizontal;
-  var label = getLabel(locals, horizontal);
+  var label = getLabel({
+    label: locals.label,
+    htmlFor: locals.id,
+    breakpoints: config.horizontal
+  });
   var error = getError(locals);
   var help = getHelp(locals);
 
@@ -1387,11 +1545,15 @@ function checkbox(locals) {
   var config = new CheckboxConfig(locals.config || {});
 
   var control = uform.getCheckbox({
+    autoFocus: locals.autoFocus,
     checked: locals.value,
     disabled: locals.disabled,
+    id: locals.id,
     label: locals.label,
     name: locals.name,
-    onChange: locals.onChange
+    onChange: function (evt) {
+      locals.onChange(evt.target.checked);
+    }
   });
 
   var error = getError(locals);
@@ -1423,21 +1585,39 @@ function select(locals) {
   var config = new SelectConfig(locals.config || {});
 
   var options = locals.options.map(function (x) {
-    return theme.Option.is(x) ? uform.getOption(x) : uform.getOptGroup(x);
+    return skin.Option.is(x) ? uform.getOption(x) : uform.getOptGroup(x);
   });
 
+  function onChange(evt) {
+    var value = locals.multiple ?
+      evt.target.options.filter(function (option) {
+        return option.selected;
+      }).map(function (option) {
+        return option.value;
+      }) :
+      evt.target.value;
+    locals.onChange(value);
+  }
+
   var control = uform.getSelect({
+    autoFocus: locals.autoFocus,
     value: locals.value,
     disabled: locals.disabled,
+    'aria-describedby': locals.help ? locals.id + '-tip' : null,
+    id: locals.label ? locals.id : null,
     name: locals.name,
-    onChange: locals.onChange,
+    onChange: onChange,
     options: options,
     size: config.size,
     multiple: locals.multiple
   });
 
   var horizontal = config.horizontal;
-  var label = getLabel(locals, horizontal);
+  var label = getLabel({
+    label: locals.label,
+    htmlFor: locals.id,
+    breakpoints: config.horizontal
+  });
   var error = getError(locals);
   var help = getHelp(locals);
   var children = [
@@ -1474,21 +1654,28 @@ function radio(locals) {
 
   var config = new RadioConfig(locals.config || {});
 
-  var control = locals.options.map(function (option) {
+  var control = locals.options.map(function (option, i) {
     return uform.getRadio({
+      autoFocus: locals.autoFocus && (i === 0),
+      'aria-describedby': locals.label ? locals.id : null,
+      id: locals.id + '-' + option.value,
       checked: (option.value === locals.value),
       disabled: option.disabled || locals.disabled,
       label: option.text,
       name: locals.name,
-      onChange: function () {
-        locals.onChange(option.value);
+      onChange: function (evt) {
+        locals.onChange(evt.target.value);
       },
       value: option.value
     });
   });
 
   var horizontal = config.horizontal;
-  var label = getLabel(locals, horizontal);
+  var label = getLabel({
+    label: locals.label,
+    id: locals.id,
+    breakpoints: config.horizontal
+  });
   var error = getError(locals);
   var help = getHelp(locals);
   var children = [
@@ -1548,7 +1735,7 @@ function struct(locals) {
     children: getFieldset({
       className: config.horizontal && config.horizontal.getFieldsetClassName(),
       disabled: locals.disabled,
-      legend: locals.label,
+      legend: locals.legend,
       children: rows
     })
   });
@@ -1603,7 +1790,7 @@ function list(locals) {
     children: getFieldset({
       className: config.horizontal && config.horizontal.getFieldsetClassName(),
       disabled: locals.disabled,
-      legend: locals.label,
+      legend: locals.legend,
       children: rows
     })
   });
@@ -1618,14 +1805,17 @@ module.exports = {
   struct: struct,
   list: list
 };
-},{"../protocols/theme":8,"tcomb-validation":19,"uvdom-bootstrap/form":21}],10:[function(require,module,exports){
+
+
+},{"../../skin":15,"tcomb-validation":28,"uvdom-bootstrap/form":30}],17:[function(require,module,exports){
 'use strict';
 
 //==================
-// WORK IN PROGRESS: contributions and PR are welcomed
+// WORK IN PROGRESS:
+// contributions and PR are welcomed
 //==================
 
-function getLabel(label) {
+function getInputLabel(label) {
   if (!label) { return; }
   return {
     tag: 'span',
@@ -1651,15 +1841,18 @@ function textbox(locals) {
       }
     },
     children: [
-      getLabel(locals.label),
+      getInputLabel(locals.label),
       {
         tag: 'input',
         attrs: {
-          type: locals.type,
-          placeholder: locals.placeholder
+          id: locals.id,
+          placeholder: locals.placeholder,
+          type: locals.type
         },
         events: {
-          change: locals.onChange
+          change: function (evt) {
+            locals.onChange(evt.target.value);
+          }
         }
       }
     ]
@@ -1667,8 +1860,39 @@ function textbox(locals) {
 
 }
 
-function checkbox() {
-  throw new Error('checkboxes are not (yet) supported');
+function checkbox(locals) {
+
+  return {
+    tag: 'label',
+    attrs: {
+      className: {
+        'item': true,
+        'item-checkbox': true,
+        'has-error': locals.hasError
+      }
+    },
+    children: [
+      {
+        tag: 'label',
+        attrs: {
+          className: {'checkbox': true}
+        },
+        children: {
+          tag: 'input',
+          attrs: {
+            type: 'checkbox',
+            id: locals.id
+          },
+          events: {
+            change: function (evt) {
+              locals.onChange(evt.target.checked);
+            }
+          }
+        }
+      },
+      getInputLabel(locals.label),
+    ]
+  };
 }
 
 function select() {
@@ -1710,18 +1934,21 @@ module.exports = {
   list: list
 };
 
-},{}],11:[function(require,module,exports){
+
+
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var t = require('tcomb-validation');
 
-function getError(error, state) {
-  if (!state.hasError) { return null; }
-  return t.Func.is(error) ? error(state.value) : error;
+function getError(error, value) {
+  return t.Func.is(error) ? error(value) : error;
 }
 
 module.exports = getError;
-},{"tcomb-validation":19}],12:[function(require,module,exports){
+
+
+},{"tcomb-validation":28}],19:[function(require,module,exports){
 'use strict';
 
 function getOptionsOfEnum(type) {
@@ -1735,11 +1962,10 @@ function getOptionsOfEnum(type) {
 }
 
 module.exports = getOptionsOfEnum;
-},{}],13:[function(require,module,exports){
-'use strict';
 
-var t = require('tcomb-validation');
-var getKind = t.util.getKind;
+
+},{}],20:[function(require,module,exports){
+'use strict';
 
 function getReport(type) {
 
@@ -1749,7 +1975,7 @@ function getReport(type) {
   var kind;
 
   while (true) {
-    kind = getKind(innerType);
+    kind = innerType.meta.kind;
     if (kind === 'maybe') {
       maybe = true;
       innerType = innerType.meta.type;
@@ -1772,7 +1998,9 @@ function getReport(type) {
 }
 
 module.exports = getReport;
-},{"tcomb-validation":19}],14:[function(require,module,exports){
+
+
+},{}],21:[function(require,module,exports){
 'use strict';
 
 // thanks to https://github.com/epeli/underscore.string
@@ -1790,7 +2018,9 @@ function humanize(s){
 }
 
 module.exports = humanize;
-},{}],15:[function(require,module,exports){
+
+
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var t = require('tcomb-validation');
@@ -1801,7 +2031,9 @@ function merge(a, b) {
 }
 
 module.exports = merge;
-},{"tcomb-validation":19}],16:[function(require,module,exports){
+
+
+},{"tcomb-validation":28}],23:[function(require,module,exports){
 'use strict';
 
 function move(arr, fromIndex, toIndex) {
@@ -1811,7 +2043,9 @@ function move(arr, fromIndex, toIndex) {
 }
 
 module.exports = move;
-},{}],17:[function(require,module,exports){
+
+
+},{}],24:[function(require,module,exports){
 'use strict';
 
 function uuid() {
@@ -1822,46 +2056,481 @@ function uuid() {
 }
 
 module.exports = uuid;
-},{}],18:[function(require,module,exports){
-/**
- * Copyright 2013-2014, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- *
- * @providesModule cx
- */
+
+
+},{}],25:[function(require,module,exports){
 
 /**
- * This function is used to mark string literals representing CSS class names
- * so that they can be transformed statically. This allows for modularization
- * and minification of CSS class names.
+ * This is the web browser implementation of `debug()`.
  *
- * In static_upstream, this function is actually implemented, but it should
- * eventually be replaced with something more descriptive, and the transform
- * that is used in the main stack should be ported for use elsewhere.
- *
- * @param string|object className to modularize, or an object of key/values.
- *                      In the object case, the values are conditions that
- *                      determine if the className keys should be included.
- * @param [string ...]  Variable list of classNames in the string case.
- * @return string       Renderable space-separated CSS className.
+ * Expose `debug()` as the module.
  */
-function cx(classNames) {
-  if (typeof classNames == 'object') {
-    return Object.keys(classNames).filter(function(className) {
-      return classNames[className];
-    }).join(' ');
-  } else {
-    return Array.prototype.join.call(arguments, ' ');
+
+exports = module.exports = require('./debug');
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+
+/**
+ * Use chrome.storage.local if we are in an app
+ */
+
+var storage;
+
+if (typeof chrome !== 'undefined' && typeof chrome.storage !== 'undefined')
+  storage = chrome.storage.local;
+else
+  storage = window.localStorage;
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+  'lightseagreen',
+  'forestgreen',
+  'goldenrod',
+  'dodgerblue',
+  'darkorchid',
+  'crimson'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+function useColors() {
+  // is webkit? http://stackoverflow.com/a/16459606/376773
+  return ('WebkitAppearance' in document.documentElement.style) ||
+    // is firebug? http://stackoverflow.com/a/398120/376773
+    (window.console && (console.firebug || (console.exception && console.table))) ||
+    // is firefox >= v31?
+    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
+}
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+exports.formatters.j = function(v) {
+  return JSON.stringify(v);
+};
+
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs() {
+  var args = arguments;
+  var useColors = this.useColors;
+
+  args[0] = (useColors ? '%c' : '')
+    + this.namespace
+    + (useColors ? ' %c' : ' ')
+    + args[0]
+    + (useColors ? '%c ' : ' ')
+    + '+' + exports.humanize(this.diff);
+
+  if (!useColors) return args;
+
+  var c = 'color: ' + this.color;
+  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
+
+  // the final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-z%]/g, function(match) {
+    if ('%%' === match) return;
+    index++;
+    if ('%c' === match) {
+      // we only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+
+  args.splice(lastC, 0, c);
+  return args;
+}
+
+/**
+ * Invokes `console.log()` when available.
+ * No-op when `console.log` is not a "function".
+ *
+ * @api public
+ */
+
+function log() {
+  // this hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return 'object' === typeof console
+    && console.log
+    && Function.prototype.apply.call(console.log, console, arguments);
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+
+function save(namespaces) {
+  try {
+    if (null == namespaces) {
+      storage.removeItem('debug');
+    } else {
+      storage.debug = namespaces;
+    }
+  } catch(e) {}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+  var r;
+  try {
+    r = storage.debug;
+  } catch(e) {}
+  return r;
+}
+
+/**
+ * Enable namespaces listed in `localStorage.debug` initially.
+ */
+
+exports.enable(load());
+
+},{"./debug":26}],26:[function(require,module,exports){
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = debug;
+exports.coerce = coerce;
+exports.disable = disable;
+exports.enable = enable;
+exports.enabled = enabled;
+exports.humanize = require('ms');
+
+/**
+ * The currently active debug mode names, and names to skip.
+ */
+
+exports.names = [];
+exports.skips = [];
+
+/**
+ * Map of special "%n" handling functions, for the debug "format" argument.
+ *
+ * Valid key names are a single, lowercased letter, i.e. "n".
+ */
+
+exports.formatters = {};
+
+/**
+ * Previously assigned color.
+ */
+
+var prevColor = 0;
+
+/**
+ * Previous log timestamp.
+ */
+
+var prevTime;
+
+/**
+ * Select a color.
+ *
+ * @return {Number}
+ * @api private
+ */
+
+function selectColor() {
+  return exports.colors[prevColor++ % exports.colors.length];
+}
+
+/**
+ * Create a debugger with the given `namespace`.
+ *
+ * @param {String} namespace
+ * @return {Function}
+ * @api public
+ */
+
+function debug(namespace) {
+
+  // define the `disabled` version
+  function disabled() {
+  }
+  disabled.enabled = false;
+
+  // define the `enabled` version
+  function enabled() {
+
+    var self = enabled;
+
+    // set `diff` timestamp
+    var curr = +new Date();
+    var ms = curr - (prevTime || curr);
+    self.diff = ms;
+    self.prev = prevTime;
+    self.curr = curr;
+    prevTime = curr;
+
+    // add the `color` if not set
+    if (null == self.useColors) self.useColors = exports.useColors();
+    if (null == self.color && self.useColors) self.color = selectColor();
+
+    var args = Array.prototype.slice.call(arguments);
+
+    args[0] = exports.coerce(args[0]);
+
+    if ('string' !== typeof args[0]) {
+      // anything else let's inspect with %o
+      args = ['%o'].concat(args);
+    }
+
+    // apply any `formatters` transformations
+    var index = 0;
+    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {
+      // if we encounter an escaped % then don't increase the array index
+      if (match === '%%') return match;
+      index++;
+      var formatter = exports.formatters[format];
+      if ('function' === typeof formatter) {
+        var val = args[index];
+        match = formatter.call(self, val);
+
+        // now we need to remove `args[index]` since it's inlined in the `format`
+        args.splice(index, 1);
+        index--;
+      }
+      return match;
+    });
+
+    if ('function' === typeof exports.formatArgs) {
+      args = exports.formatArgs.apply(self, args);
+    }
+    var logFn = enabled.log || exports.log || console.log.bind(console);
+    logFn.apply(self, args);
+  }
+  enabled.enabled = true;
+
+  var fn = exports.enabled(namespace) ? enabled : disabled;
+
+  fn.namespace = namespace;
+
+  return fn;
+}
+
+/**
+ * Enables a debug mode by namespaces. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} namespaces
+ * @api public
+ */
+
+function enable(namespaces) {
+  exports.save(namespaces);
+
+  var split = (namespaces || '').split(/[\s,]+/);
+  var len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    if (!split[i]) continue; // ignore empty strings
+    namespaces = split[i].replace(/\*/g, '.*?');
+    if (namespaces[0] === '-') {
+      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+    } else {
+      exports.names.push(new RegExp('^' + namespaces + '$'));
+    }
   }
 }
 
-module.exports = cx;
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
 
-},{}],19:[function(require,module,exports){
+function disable() {
+  exports.enable('');
+}
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+function enabled(name) {
+  var i, len;
+  for (i = 0, len = exports.skips.length; i < len; i++) {
+    if (exports.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (i = 0, len = exports.names.length; i < len; i++) {
+    if (exports.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Coerce `val`.
+ *
+ * @param {Mixed} val
+ * @return {Mixed}
+ * @api private
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+},{"ms":27}],27:[function(require,module,exports){
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} options
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function(val, options){
+  options = options || {};
+  if ('string' == typeof val) return parse(val);
+  return options.long
+    ? long(val)
+    : short(val);
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  var match = /^((?:\d+)?\.?\d+) *(ms|seconds?|s|minutes?|m|hours?|h|days?|d|years?|y)?$/i.exec(str);
+  if (!match) return;
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'y':
+      return n * y;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 's':
+      return n * s;
+    case 'ms':
+      return n;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function short(ms) {
+  if (ms >= d) return Math.round(ms / d) + 'd';
+  if (ms >= h) return Math.round(ms / h) + 'h';
+  if (ms >= m) return Math.round(ms / m) + 'm';
+  if (ms >= s) return Math.round(ms / s) + 's';
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function long(ms) {
+  return plural(ms, d, 'day')
+    || plural(ms, h, 'hour')
+    || plural(ms, m, 'minute')
+    || plural(ms, s, 'second')
+    || ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, n, name) {
+  if (ms < n) return;
+  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;
+  return Math.ceil(ms / n) + ' ' + name + 's';
+}
+
+},{}],28:[function(require,module,exports){
 (function (root, factory) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -1941,11 +2610,11 @@ module.exports = cx;
     return validators[kind](x, type, path);
   }
 
-  var validators = {};
+  var validators = validate.validators = {};
 
-  // irriducibles and enums
-  validators.irriducible =
-  validators.enums = function validateIrriducible(x, type, path) {
+  // irreducibles and enums
+  validators.irreducible =
+  validators.enums = function validateIrreducible(x, type, path) {
     return {
       value: x,
       errors: type.is(x) ? [] : [ValidationError.of(x, type, path)]
@@ -2080,7 +2749,7 @@ module.exports = cx;
 
 }));
 
-},{"tcomb":20}],20:[function(require,module,exports){
+},{"tcomb":29}],29:[function(require,module,exports){
 (function (root, factory) {
   'use strict';
   if (typeof define === 'function' && define.amd) {
@@ -2150,7 +2819,7 @@ module.exports = cx;
     for (var k in source) {
       if (source.hasOwnProperty(k)) {
         if (overwrite !== true) {
-          assert(!target.hasOwnProperty(k), 'cannot overwrite property %s', k);
+          assert(!target.hasOwnProperty(k), 'Cannot overwrite property %s', k);
         }
         target[k] = source[k];
       }
@@ -2198,17 +2867,22 @@ module.exports = cx;
   };
 
   function getName(type) {
-    assert(Type.is(type), 'Invalid argument `type` of value `%j` supplied to `getName()`, expected a type.', type);
+    assert(Type.is(type), 'Invalid argument `type` = `%s` supplied to `getName()`', type);
     return type.meta.name;
   }
 
+  function getFunctionName(f) {
+    assert(typeof f === 'function', 'Invalid argument `f` = `%s` supplied to `getFunctionName()`', f);
+    return f.displayName || f.name || format('<function%s>', f.length);
+  }
+
   function getKind(type) {
-    assert(Type.is(type), 'Invalid argument `type` of value `%j` supplied to `geKind()`, expected a type.', type);
+    assert(Type.is(type), 'Invalid argument `type` = `%s` supplied to `geKind()`', type);
     return type.meta.kind;
   }
 
   function blockNew(x, type) {
-    assert(!(x instanceof type), 'Operator `new` is forbidden for `%s`', getName(type));
+    assert(!(x instanceof type), 'Operator `new` is forbidden for type `%s`', getName(type));
   }
 
   function shallowCopy(x) {
@@ -2281,86 +2955,86 @@ module.exports = cx;
   };
 
   //
-  // irriducibles
+  // irreducibles
   //
 
-  function irriducible(name, is) {
+  function irreducible(name, is) {
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a string
-    assert(typeof name === 'string', 'Invalid argument `name` supplied to `irriducible()`');
+    assert(typeof name === 'string', 'Invalid argument `name` = `%s` supplied to `irreducible()`', name);
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a function
-    assert(typeof is === 'function', 'Invalid argument `is` supplied to `irriducible()`');
+    assert(typeof is === 'function', 'Invalid argument `is` = `%s` supplied to `irreducible()`', is);
 
-    function Irriducible(value) {
+    function Irreducible(value) {
 
       // DEBUG HINT: if the debugger stops here, you have used the `new` operator but it's forbidden
-      blockNew(this, Irriducible);
+      blockNew(this, Irreducible);
 
       // DEBUG HINT: if the debugger stops here, the first argument is invalid
       // mouse over the `value` variable to see what's wrong. In `name` there is the name of the type
-      assert(is(value), 'Invalid `%s` supplied to `%s`', value, name);
+      assert(is(value), 'Invalid argument `value` = `%s` supplied to irreducible type `%s`', value, name);
 
       return value;
     }
 
-    Irriducible.meta = {
-      kind: 'irriducible',
+    Irreducible.meta = {
+      kind: 'irreducible',
       name: name
     };
 
-    Irriducible.displayName = name;
+    Irreducible.displayName = name;
 
-    Irriducible.is = is;
+    Irreducible.is = is;
 
-    return Irriducible;
+    return Irreducible;
   }
 
-  var Any = irriducible('Any', function isAny() {
+  var Any = irreducible('Any', function isAny() {
     return true;
   });
 
-  var Nil = irriducible('Nil', function isNil(x) {
+  var Nil = irreducible('Nil', function isNil(x) {
     return x === null || x === void 0;
   });
 
-  var Str = irriducible('Str', function isStr(x) {
+  var Str = irreducible('Str', function isStr(x) {
     return typeof x === 'string';
   });
 
-  var Num = irriducible('Num', function isNum(x) {
+  var Num = irreducible('Num', function isNum(x) {
     return typeof x === 'number' && isFinite(x) && !isNaN(x);
   });
 
-  var Bool = irriducible('Bool', function isBool(x) {
+  var Bool = irreducible('Bool', function isBool(x) {
     return x === true || x === false;
   });
 
-  var Arr = irriducible('Arr', function isArr(x) {
+  var Arr = irreducible('Arr', function isArr(x) {
     return x instanceof Array;
   });
 
-  var Obj = irriducible('Obj', function isObj(x) {
+  var Obj = irreducible('Obj', function isObj(x) {
     return !Nil.is(x) && typeof x === 'object' && !Arr.is(x);
   });
 
-  var Func = irriducible('Func', function isFunc(x) {
+  var Func = irreducible('Func', function isFunc(x) {
     return typeof x === 'function';
   });
 
-  var Err = irriducible('Err', function isErr(x) {
+  var Err = irreducible('Err', function isErr(x) {
     return x instanceof Error;
   });
 
-  var Re = irriducible('Re', function isRe(x) {
+  var Re = irreducible('Re', function isRe(x) {
     return x instanceof RegExp;
   });
 
-  var Dat = irriducible('Dat', function isDat(x) {
+  var Dat = irreducible('Dat', function isDat(x) {
     return x instanceof Date;
   });
 
-  var Type = irriducible('Type', function isType(x) {
+  var Type = irreducible('Type', function isType(x) {
     return Func.is(x) && Obj.is(x.meta);
   });
 
@@ -2368,14 +3042,16 @@ module.exports = cx;
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a dict of types
     // mouse over the `props` variable to see what's wrong
-    assert(dict(Str, Type).is(props), 'Invalid argument `props` supplied to `struct()`');
+    assert(dict(Str, Type).is(props), 'Invalid argument `props` = `%s` supplied to `struct` combinator', props);
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(maybe(Str).is(name), 'Invalid argument `name` supplied to `struct()`');
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `struct` combinator', name);
 
     // DEBUG HINT: always give a name to a type, the debug will be easier
-    name = name || 'struct';
+    name = name || format('{%s}', Object.keys(props).map(function (prop) {
+      return format('%s: %s', prop, getName(props[prop]));
+    }).join(', '));
 
     function Struct(value, mut) {
 
@@ -2386,7 +3062,7 @@ module.exports = cx;
 
       // DEBUG HINT: if the debugger stops here, the first argument is invalid
       // mouse over the `value` variable to see what's wrong. In `name` there is the name of the type
-      assert(Obj.is(value), 'Invalid `%s` supplied to `%s`, expected an `Obj`', value, name);
+      assert(Obj.is(value), 'Invalid argument `value` = `%s` supplied to struct type `%s`', value, name);
 
       // makes `new` optional
       if (!(this instanceof Struct)) {
@@ -2424,10 +3100,14 @@ module.exports = cx;
       return new Struct(update(instance, spec, value));
     };
 
-    Struct.extend = function extendStruct(newProps, name) {
-      var newStruct = struct([props].concat(newProps).reduce(mixin, {}), name);
-      mixin(newStruct.prototype, Struct.prototype); // prototypal inheritance
-      return newStruct;
+    Struct.extend = function extendStruct(arr, name) {
+      arr = [].concat(arr).map(function (x) {
+        return Obj.is(x) ? x : x.meta.props;
+      });
+      arr.unshift(props);
+      var ret = struct(arr.reduce(mixin, {}), name);
+      mixin(ret.prototype, Struct.prototype); // prototypal inheritance
+      return ret;
     };
 
     return Struct;
@@ -2436,18 +3116,19 @@ module.exports = cx;
   function union(types, name) {
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a list of types
-    assert(list(Type).is(types), 'Invalid argument `types` supplied to `union()`');
+    assert(list(Type).is(types), 'Invalid argument `types` = `%s` supplied to `union` combinator', types);
 
     var len = types.length;
+    var defaultName = types.map(getName).join(' | ');
 
     // DEBUG HINT: if the debugger stops here, there are too few types (they must be at least two)
-    assert(len >= 2, 'Invalid argument `types` supplied to `union()`');
+    assert(len >= 2, 'Invalid argument `types` = `%s` supplied to `union` combinator, provide at least two types', defaultName);
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(maybe(Str).is(name), 'Invalid argument `name` supplied to `union()`');
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `union` combinator', name);
 
-    name = name || format('union([%s])', types.map(getName).join(', '));
+    name = name || defaultName;
 
     function Union(value, mut) {
 
@@ -2455,12 +3136,12 @@ module.exports = cx;
       blockNew(this, Union);
 
       // DEBUG HINT: if the debugger stops here, you must implement the `dispatch` static method for this type
-      assert(Func.is(Union.dispatch), 'unimplemented %s.dispatch()', name);
+      assert(Func.is(Union.dispatch), 'Unimplemented `dispatch()` function for union type `%s`', name);
 
       var type = Union.dispatch(value);
 
       // DEBUG HINT: if the debugger stops here, the `dispatch` static method returns no type
-      assert(Type.is(type), '%s.dispatch() returns no type', name);
+      assert(Type.is(type), 'The `dispatch()` function of union type `%s` returns no type constructor', name);
 
       // DEBUG HINT: if the debugger stops here, `value` can't be converted to `type`
       // mouse over the `value` and `type` variables to see what's wrong
@@ -2496,18 +3177,18 @@ module.exports = cx;
   function maybe(type, name) {
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a type
-    assert(Type.is(type), 'Invalid argument `type` supplied to `maybe()`');
+    assert(Type.is(type), 'Invalid argument `type` = `%s` supplied to `maybe` combinator', type);
 
-    // makes the combinator idempotent
-    if (getKind(type) === 'maybe') {
+    // makes the combinator idempotent and handle Any, Nil
+    if (getKind(type) === 'maybe' || type === Any || type === Nil) {
       return type;
     }
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(Nil.is(name) || Str.is(name), 'Invalid argument `name` supplied to `maybe()`');
+    assert(Nil.is(name) || Str.is(name), 'Invalid argument `name` = `%s` supplied to `maybe` combinator', name);
 
-    name = name || format('maybe(%s)', getName(type));
+    name = name || ('?' + getName(type));
 
     function Maybe(value, mut) {
 
@@ -2538,16 +3219,16 @@ module.exports = cx;
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a hash
     // mouse over the `map` variable to see what's wrong
-    assert(Obj.is(map), 'Invalid argument `map` supplied to `enums()`');
+    assert(Obj.is(map), 'Invalid argument `map` = `%s` supplied to `enums` combinator', map);
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(maybe(Str).is(name), 'Invalid argument `name` supplied to `enums()`');
-
-    name = name || 'enums';
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `enums` combinator', name);
 
     // cache enums
     var keys = Object.keys(map);
+
+    name = name || keys.map(function (k) { return JSON.stringify(k); }).join(' | ');
 
     function Enums(value) {
 
@@ -2556,7 +3237,7 @@ module.exports = cx;
 
       // DEBUG HINT: if the debugger stops here, the value is not one of the defined enums
       // mouse over the `value`, `name` and `keys` variables to see what's wrong
-      assert(Enums.is(value), 'Invalid `%s` supplied to `%s`, expected one of %j', value, name, keys);
+      assert(Enums.is(value), 'Invalid argument `value` = `%s` supplied to enums type `%s`, expected one of %j', value, name, keys);
 
       return value;
     }
@@ -2588,21 +3269,21 @@ module.exports = cx;
   function tuple(types, name) {
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a list of types
-    assert(list(Type).is(types), 'Invalid argument `types` supplied to `tuple()`');
+    assert(list(Type).is(types), 'Invalid argument `types` = `%s` supplied to `tuple` combinator', types);
 
     var len = types.length;
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(maybe(Str).is(name), 'Invalid argument `name` supplied to `tuple()`');
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `tuple` combinator', name);
 
-    name = name || format('tuple([%s])', types.map(getName).join(', '));
+    name = name || format('[%s]', types.map(getName).join(', '));
 
     function Tuple(value, mut) {
 
       // DEBUG HINT: if the debugger stops here, the value is not one of the defined enums
       // mouse over the `value`, `name` and `len` variables to see what's wrong
-      assert(Arr.is(value) && value.length === len, 'Invalid `%s` supplied to `%s`, expected an `Arr` of length `%s`', value, name, len);
+      assert(Arr.is(value) && value.length === len, 'Invalid argument `value` = `%s` supplied to tuple type `%s`, expected an `Arr` of length `%s`', value, name, len);
 
       var frozen = (mut !== true);
 
@@ -2655,20 +3336,17 @@ module.exports = cx;
   function subtype(type, predicate, name) {
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a type
-    assert(Type.is(type), 'Invalid argument `type` supplied to `subtype()`');
+    assert(Type.is(type), 'Invalid argument `type` = `%s` supplied to `subtype` combinator', type);
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a function
-    assert(Func.is(predicate), 'Invalid argument `predicate` supplied to `subtype()`');
+    assert(Func.is(predicate), 'Invalid argument `predicate` = `%s` supplied to `subtype` combinator', predicate);
 
     // DEBUG HINT: if the debugger stops here, the third argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(maybe(Str).is(name), 'Invalid argument `name` supplied to `subtype()`');
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `subtype` combinator', name);
 
     // DEBUG HINT: always give a name to a type, the debug will be easier
-    name = name || format('subtype(%s)', getName(type));
-
-    // cache expected value
-    var expected = predicate.__doc__ || format('insert a valid value for %s', predicate.name || 'the subtype');
+    name = name || format('{%s | %s}', getName(type), getFunctionName(predicate));
 
     function Subtype(value, mut) {
 
@@ -2680,7 +3358,7 @@ module.exports = cx;
 
       // DEBUG HINT: if the debugger stops here, the value is converted to the base type
       // but the predicate returns `false`
-      assert(predicate(x), 'Invalid `%s` supplied to `%s`, %s', value, name, expected);
+      assert(predicate(x), 'Invalid argument `value` = `%s` supplied to subtype type `%s`', value, name);
       return x;
     }
 
@@ -2707,14 +3385,14 @@ module.exports = cx;
   function list(type, name) {
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a type
-    assert(Type.is(type), 'Invalid argument `type` supplied to `list()`');
+    assert(Type.is(type), 'Invalid argument `type` = `%s` supplied to `list` combinator', type);
 
     // DEBUG HINT: if the debugger stops here, the third argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(maybe(Str).is(name), 'Invalid argument `name` supplied to `list()`');
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `list` combinator', name);
 
     // DEBUG HINT: always give a name to a type, the debug will be easier
-    name = name || format('list(%s)', getName(type));
+    name = name || format('Array<%s>', getName(type));
 
     function List(value, mut) {
 
@@ -2722,7 +3400,7 @@ module.exports = cx;
 
       // DEBUG HINT: if the debugger stops here, the value is not one of the defined enums
       // mouse over the `value` and `name` variables to see what's wrong
-      assert(Arr.is(value), 'Invalid `%s` supplied to `%s`, expected an `Arr`', value, name);
+      assert(Arr.is(value), 'Invalid argument `value` = `%s` supplied to list type `%s`', value, name);
 
       var frozen = (mut !== true);
 
@@ -2771,23 +3449,23 @@ module.exports = cx;
   function dict(domain, codomain, name) {
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a type
-    assert(Type.is(domain), 'Invalid argument `domain` supplied to `dict()`');
+    assert(Type.is(domain), 'Invalid argument `domain` = `%s` supplied to `dict` combinator', domain);
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a type
-    assert(Type.is(codomain), 'Invalid argument `codomain` supplied to `dict()`');
+    assert(Type.is(codomain), 'Invalid argument `codomain` = `%s` supplied to `dict` combinator', codomain);
 
     // DEBUG HINT: if the debugger stops here, the third argument is not a string
     // mouse over the `name` variable to see what's wrong
-    assert(maybe(Str).is(name), 'Invalid argument `name` supplied to `dict()`');
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `dict` combinator', name);
 
     // DEBUG HINT: always give a name to a type, the debug will be easier
-    name = name || format('dict(%s, %s)', getName(domain), getName(codomain));
+    name = name || format('{[key:%s]: %s}', getName(domain), getName(codomain));
 
     function Dict(value, mut) {
 
       // DEBUG HINT: if the debugger stops here, the value is not an object
       // mouse over the `value` and `name` variables to see what's wrong
-      assert(Obj.is(value), 'Invalid `%s` supplied to `%s`, expected an `Obj`', value, name);
+      assert(Obj.is(value), 'Invalid argument `value` = `%s` supplied to dict type `%s`', value, name);
 
       var frozen = (mut !== true);
 
@@ -2851,13 +3529,17 @@ module.exports = cx;
     domain = Arr.is(domain) ? domain : [domain];
 
     // DEBUG HINT: if the debugger stops here, the first argument is not a list of types
-    assert(list(Type).is(domain), 'Invalid argument `domain` supplied to `func()`');
+    assert(list(Type).is(domain), 'Invalid argument `domain` = `%s` supplied to `func` combinator', domain);
 
     // DEBUG HINT: if the debugger stops here, the second argument is not a type
-    assert(Type.is(codomain), 'Invalid argument `codomain` supplied to `func()`');
+    assert(Type.is(codomain), 'Invalid argument `codomain` = `%s` supplied to `func` combinator', codomain);
+
+    // DEBUG HINT: if the debugger stops here, the third argument is not a string
+    // mouse over the `name` variable to see what's wrong
+    assert(maybe(Str).is(name), 'Invalid argument `name` = `%s` supplied to `func` combinator', name);
 
     // DEBUG HINT: always give a name to a type, the debug will be easier
-    name = name || format('func([%s], %s)', domain.map(getName).join(', '), getName(codomain));
+    name = name || format('(%s) -> %s', domain.map(getName).join(', '), getName(codomain));
 
     // cache the domain length
     var domainLen = domain.length;
@@ -2871,7 +3553,7 @@ module.exports = cx;
 
       // DEBUG HINT: if the debugger stops here, the first argument is invalid
       // mouse over the `value` and `name` variables to see what's wrong
-      assert(Func.is(value), 'Invalid `%s` supplied to `%s`', value, name);
+      assert(Func.is(value), 'Invalid argument `value` = `%s` supplied to func type `%s`', value, name);
 
       return value;
     }
@@ -2956,10 +3638,11 @@ module.exports = cx;
   return {
 
     util: {
-      mixin: mixin,
       format: format,
-      getName: getName,
       getKind: getKind,
+      getFunctionName: getFunctionName,
+      getName: getName,
+      mixin: mixin,
       slice: slice,
       shallowCopy: shallowCopy,
       update: update
@@ -2982,7 +3665,7 @@ module.exports = cx;
     Dat: Dat,
     Type: Type,
 
-    irriducible: irriducible,
+    irreducible: irreducible,
     struct: struct,
     enums: enums,
     union: union,
@@ -2995,7 +3678,7 @@ module.exports = cx;
   };
 }));
 
-},{}],21:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 module.exports = {
   getAddon: require('./lib/getAddon'),
   getAlert: require('./lib/getAlert'),
@@ -3004,6 +3687,7 @@ module.exports = {
   getButtonGroup: require('./lib/getButtonGroup'),
   getCheckbox: require('./lib/getCheckbox'),
   getCol: require('./lib/getCol'),
+  getErrorBlock: require('./lib/getErrorBlock'),
   getFieldset: require('./lib/getFieldset'),
   getFormGroup: require('./lib/getFormGroup'),
   getHelpBlock: require('./lib/getHelpBlock'),
@@ -3018,7 +3702,7 @@ module.exports = {
   getStatic: require('./lib/getStatic'),
   getTextbox: require('./lib/getTextbox')
 };
-},{"./lib/getAddon":22,"./lib/getAlert":23,"./lib/getBreakpoints":24,"./lib/getButton":25,"./lib/getButtonGroup":26,"./lib/getCheckbox":27,"./lib/getCol":28,"./lib/getFieldset":29,"./lib/getFormGroup":30,"./lib/getHelpBlock":31,"./lib/getInputGroup":32,"./lib/getLabel":33,"./lib/getOffsets":34,"./lib/getOptGroup":35,"./lib/getOption":36,"./lib/getRadio":37,"./lib/getRow":38,"./lib/getSelect":39,"./lib/getStatic":40,"./lib/getTextbox":41}],22:[function(require,module,exports){
+},{"./lib/getAddon":31,"./lib/getAlert":32,"./lib/getBreakpoints":33,"./lib/getButton":34,"./lib/getButtonGroup":35,"./lib/getCheckbox":36,"./lib/getCol":37,"./lib/getErrorBlock":38,"./lib/getFieldset":39,"./lib/getFormGroup":40,"./lib/getHelpBlock":41,"./lib/getInputGroup":42,"./lib/getLabel":43,"./lib/getOffsets":44,"./lib/getOptGroup":45,"./lib/getOption":46,"./lib/getRadio":47,"./lib/getRow":48,"./lib/getSelect":49,"./lib/getStatic":50,"./lib/getTextbox":51}],31:[function(require,module,exports){
 'use strict';
 
 function getAddon(addon) {
@@ -3034,7 +3718,7 @@ function getAddon(addon) {
 }
 
 module.exports = getAddon;
-},{}],23:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 function getAlert(opts) {
@@ -3055,7 +3739,7 @@ function getAlert(opts) {
 }
 
 module.exports = getAlert;
-},{}],24:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 'use strict';
 
 function getBreakpoints(breakpoints) {
@@ -3069,7 +3753,7 @@ function getBreakpoints(breakpoints) {
 }
 
 module.exports = getBreakpoints;
-},{}],25:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 /*
@@ -3081,7 +3765,11 @@ module.exports = getBreakpoints;
     block: true,
     active: true,
     size: 'lg',
-    disabled: true
+    disabled: true,
+    autoFocus: true,
+    events: {
+      ...
+    }
   }
 
 */
@@ -3100,15 +3788,18 @@ function getButton(opts) {
     className['btn-' + opts.size] = true;
   }
 
+  var events = opts.events || {
+    click: opts.click
+  };
+
   return {
     tag: 'button',
     attrs: {
       disabled: opts.disabled,
-      className: className
+      className: className,
+      autoFocus: opts.autoFocus
     },
-    events: {
-      click: opts.click
-    },
+    events: events,
     children: opts.label,
     key: opts.key
   }
@@ -3116,7 +3807,7 @@ function getButton(opts) {
 
 module.exports = getButton;
 
-},{}],26:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 function getButtonGroup(buttons) {
@@ -3134,7 +3825,7 @@ function getButtonGroup(buttons) {
 module.exports = getButtonGroup;
 
 
-},{}],27:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 /*
@@ -3147,12 +3838,19 @@ module.exports = getButtonGroup;
     checked: true,
     name: 'rememberMe',
     disabled: false,
-    ref: 'input'
+    events: {
+      ...
+    },
+    autoFocus: true
   }
 
 */
 
 function getCheckbox(opts) {
+
+  var events = opts.events || {
+    change: opts.onChange
+  };
 
   return {
     tag: 'div',
@@ -3164,20 +3862,21 @@ function getCheckbox(opts) {
     },
     children: {
       tag: 'label',
+      attrs: {
+        htmlFor: opts.id
+      },
       children: [
         {
           tag: 'input',
           attrs: {
-            type: 'checkbox',
             checked: opts.checked,
             disabled: opts.disabled,
-            defaultChecked: opts.defaultChecked,
+            id: opts.id,
             name: opts.name,
-            value: 'true'
+            type: 'checkbox',
+            autoFocus: opts.autoFocus
           },
-          events: {
-            change: opts.onChange
-          }
+          events: events
         },
         ' ',
         opts.label
@@ -3187,7 +3886,7 @@ function getCheckbox(opts) {
 }
 
 module.exports = getCheckbox;
-},{}],28:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 var getBreakpoints = require('./getBreakpoints');
@@ -3206,7 +3905,26 @@ function getCol(opts) {
 }
 
 module.exports = getCol;
-},{"./getBreakpoints":24}],29:[function(require,module,exports){
+},{"./getBreakpoints":33}],38:[function(require,module,exports){
+'use strict';
+
+function getErrorBlock(opts) {
+  return {
+    tag: 'span',
+    attrs: {
+      className: {
+        'help-block': true,
+        'error-block': opts.hasError
+      }
+    },
+    children: opts.error
+  };
+}
+
+module.exports = getErrorBlock;
+
+
+},{}],39:[function(require,module,exports){
 'use strict';
 
 function getFieldset(opts) {
@@ -3233,7 +3951,7 @@ function getFieldset(opts) {
 module.exports = getFieldset;
 
 
-},{}],30:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 function getFormGroup(opts) {
@@ -3250,7 +3968,7 @@ function getFormGroup(opts) {
 }
 
 module.exports = getFormGroup;
-},{}],31:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 /*
@@ -3259,7 +3977,8 @@ module.exports = getFormGroup;
 
   {
     help: 'my help',
-    hasError: true
+    hasError: true,
+    id: 'password-tip'
   }
 
 */
@@ -3271,7 +3990,10 @@ function getHelpBlock(opts) {
       className: {
         'help-block': true,
         'error-block': opts.hasError
-      }
+      },
+      // aria support
+      id: opts.id,
+      role: 'tooltip'
     },
     children: opts.help
   };
@@ -3280,7 +4002,7 @@ function getHelpBlock(opts) {
 module.exports = getHelpBlock;
 
 
-},{}],32:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 function getInputGroup(children) {
@@ -3296,7 +4018,7 @@ function getInputGroup(children) {
 }
 
 module.exports = getInputGroup;
-},{}],33:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 var mixin = require('./mixin');
@@ -3308,6 +4030,7 @@ var mixin = require('./mixin');
   {
     label: 'my label',
     htmlFor: 'inputId',
+    id: 'myid',
     align: 'right',
     className: {}
   }
@@ -3328,6 +4051,7 @@ function getLabel(opts) {
     tag: 'label',
     attrs: {
       htmlFor: opts.htmlFor,
+      id: opts.id,
       className: className
     },
     children: opts.label
@@ -3337,7 +4061,7 @@ function getLabel(opts) {
 module.exports = getLabel;
 
 
-},{"./mixin":42}],34:[function(require,module,exports){
+},{"./mixin":52}],44:[function(require,module,exports){
 'use strict';
 
 function getOffsets(breakpoints) {
@@ -3351,7 +4075,7 @@ function getOffsets(breakpoints) {
 }
 
 module.exports = getOffsets;
-},{}],35:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 var getOption = require('./getOption');
@@ -3385,7 +4109,7 @@ function getOptGroup(opts) {
 module.exports = getOptGroup;
 
 
-},{"./getOption":36}],36:[function(require,module,exports){
+},{"./getOption":46}],46:[function(require,module,exports){
 'use strict';
 
 /*
@@ -3414,7 +4138,7 @@ function getOption(opts) {
 module.exports = getOption;
 
 
-},{}],37:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 'use strict';
 
 /*
@@ -3428,12 +4152,19 @@ module.exports = getOption;
     value: '1',
     name: 'option',
     disabled: false,
-    ref: 'input'
+    events: {
+      ...
+    },
+    autoFocus: true
   }
 
 */
 
 function getRadio(opts) {
+
+  var events = opts.events || {
+    change: opts.onChange
+  };
 
   return {
     tag: 'div',
@@ -3445,6 +4176,9 @@ function getRadio(opts) {
     },
     children: {
       tag: 'label',
+      attrs: {
+        htmlFor: opts.id,
+      },
       children: [
         {
           tag: 'input',
@@ -3454,11 +4188,13 @@ function getRadio(opts) {
             defaultChecked: opts.defaultChecked,
             disabled: opts.disabled,
             name: opts.name,
-            value: opts.value
+            value: opts.value,
+            id: opts.id,
+            // aria support
+            'aria-describedby': opts['aria-describedby'],
+            autoFocus: opts.autoFocus
           },
-          events: {
-            change: opts.onChange
-          }
+          events: events
         },
         ' ',
         opts.label
@@ -3469,7 +4205,7 @@ function getRadio(opts) {
 }
 
 module.exports = getRadio;
-},{}],38:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 'use strict';
 
 function getRow(opts) {
@@ -3486,7 +4222,7 @@ function getRow(opts) {
 }
 
 module.exports = getRow;
-},{}],39:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 /*
@@ -3499,12 +4235,20 @@ module.exports = getRow;
     name: 'myname',
     disabled: false,
     size: 'lg',
-    ref: 'input'
+    events: {
+      ...
+    },
+    'aria-describedby': 'password-tip',
+    autoFocus: false
   }
 
 */
 
 function getSelect(opts) {
+
+  var events = opts.events || {
+    change: opts.onChange
+  };
 
   var className = {
     'form-control': true
@@ -3521,17 +4265,19 @@ function getSelect(opts) {
       value: opts.value,
       disabled: opts.disabled,
       className: className,
-      multiple: opts.multiple
+      multiple: opts.multiple,
+      id: opts.id,
+      // aria support
+      'aria-describedby': opts['aria-describedby'],
+      autoFocus: opts.autoFocus
     },
     children: opts.options,
-    events: {
-      change: opts.onChange
-    }
+    events: events
   };
 }
 
 module.exports = getSelect;
-},{}],40:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 function getStatic(value) {
@@ -3547,7 +4293,7 @@ function getStatic(value) {
 }
 
 module.exports = getStatic;
-},{}],41:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 /*
@@ -3563,12 +4309,20 @@ module.exports = getStatic;
     placeholder: 'insert your name',
     readOnly: true,
     size: 'lg',
-    ref: 'input'
+    events: {
+      ...
+    },
+    'aria-describedby': 'password-tip',
+    autoFocus: true
   }
 
 */
 
 function getTextbox(opts) {
+
+  var events = opts.events || {
+    change: opts.onChange
+  };
 
   var type = opts.type || 'text';
   var className = {
@@ -3588,16 +4342,17 @@ function getTextbox(opts) {
       disabled: opts.disabled,
       placeholder: opts.placeholder,
       readOnly: opts.readOnly,
-      className: className
+      className: className,
+      id: opts.id,
+      'aria-describedby': opts['aria-describedby'],
+      autoFocus: opts.autoFocus
     },
-    events: {
-      change: opts.onChange
-    }
+    events: events
   };
 }
 
 module.exports = getTextbox;
-},{}],42:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 function mixin(a, b) {
@@ -3611,7 +4366,46 @@ function mixin(a, b) {
 }
 
 module.exports = mixin;
-},{}],43:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
+/**
+ * Copyright 2013-2014, Facebook, Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ *
+ * @providesModule cx
+ */
+
+/**
+ * This function is used to mark string literals representing CSS class names
+ * so that they can be transformed statically. This allows for modularization
+ * and minification of CSS class names.
+ *
+ * In static_upstream, this function is actually implemented, but it should
+ * eventually be replaced with something more descriptive, and the transform
+ * that is used in the main stack should be ported for use elsewhere.
+ *
+ * @param string|object className to modularize, or an object of key/values.
+ *                      In the object case, the values are conditions that
+ *                      determine if the className keys should be included.
+ * @param [string ...]  Variable list of classNames in the string case.
+ * @return string       Renderable space-separated CSS className.
+ */
+function cx(classNames) {
+  if (typeof classNames == 'object') {
+    return Object.keys(classNames).filter(function(className) {
+      return classNames[className];
+    }).join(' ');
+  } else {
+    return Array.prototype.join.call(arguments, ' ');
+  }
+}
+
+module.exports = cx;
+
+},{}],54:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -3680,4 +4474,4 @@ function mixin(x, y) {
 module.exports = {
   compile: compile
 };
-},{"react":"react","react/lib/cx":18}]},{},[1]);
+},{"react":"react","react/lib/cx":53}]},{},[1]);

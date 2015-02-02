@@ -4,10 +4,10 @@ var React = require('react');
 var t = require('../../.');
 
 // helper function
-function render(i, type, options, value, attachOnChange) {
+function render(i, type, opts, onChange) {
 
   var formPreview = document.getElementById('p' + i);
-  var Form = t.form.Form;
+  var Form = t.form.create(type, opts);
 
   var App  = React.createClass({
 
@@ -29,14 +29,8 @@ function render(i, type, options, value, attachOnChange) {
     render: function () {
       return (
         React.DOM.div(null,
-          React.createFactory(Form)({
-            ref: 'form',
-            type: type,
-            options: options,
-            value: value,
-            onChange: attachOnChange ? this.onChange : null
-          }),
-          React.DOM.button({
+          React.createFactory(Form)({ref: 'form', onChange: onChange ? this.onChange : null}),
+          onChange ? null : React.DOM.button({
             onClick: this.onClick,
             className: 'btn btn-primary'
           }, 'Click me')
@@ -152,7 +146,7 @@ render('8', Persons);
 // ===============================================
 
 render('9', Person6, {
-  auto: 'placeholders'
+  auto: 'labels'
 });
 
 // ===============================================
@@ -163,17 +157,19 @@ render('10', Person6, {
 
 // ===============================================
 
-render('11', Person6, null, {
-  name: 'Giulio',
-  surname: 'Canti',
-  age: 41,
-  gender: 'M'
+render('11', Person6, {
+  value: {
+    name: 'Giulio',
+    surname: 'Canti',
+    age: 41,
+    gender: 'M'
+  }
 });
 
 // ===============================================
 
 render('12', Person1, {
-  legend: React.DOM.i(null, 'My form legend')
+  label: React.DOM.i(null, 'My form legend')
 });
 
 // ===============================================
@@ -397,7 +393,7 @@ render('31', Select2, {
 render('32', Select, {
   fields: {
     gender: {
-      factory: t.form.Radio
+      factory: t.form.radio
     }
   }
 });
@@ -514,96 +510,118 @@ render('37', Search2, {
       transformer: listTransformer,
       help: 'Keywords are separated by spaces'
     }
+  },
+  value: {
+    search: ['climbing', 'yosemite']
   }
-}, {
-  search: ['climbing', 'yosemite']
 });
 
 // ===============================================
 
-var SearchComponent = React.createClass({
-  getInitialState: function () {
-    return {
-      hasError: false,
-      value: this.props.value
-    };
-  },
-  componentWillReceiveProps: function (props) {
-    this.setState({value: props.value});
-  },
-  shouldComponentUpdate: function (nextProps, nextState) {
-    return nextState.value !== this.state.value ||
-      nextState.hasError !== this.state.hasError ||
-      nextProps.value !== this.props.value ||
-      nextProps.options !== this.props.options ||
-      nextProps.ctx.report.type !== this.props.ctx.report.type ||
-      nextProps.onChange !== this.props.onChange;
-  },
-  onChange: function (value) {
-    value = listTransformer.parse(value);
-    this.setState({value: value}, function () {
-      this.props.onChange(value);
-    }.bind(this));
-  },
-  getValue: function () {
-    var result = t.validate(this.state.value, this.props.ctx.report.type);
-    this.setState({hasError: !result.isValid()});
-    return result;
-  },
-  render: function () {
-    var opts = this.props.options || {};
-    var ctx = this.props.ctx;
+function searchFactory(opts, ctx) {
 
-    // handling label
-    var label = opts.label;
-    if (!label && ctx.auto === 'labels') {
-      // if labels are auto generated, get the default label
-      label = ctx.getDefaultLabel();
-    }
+  opts = opts || {};
 
-    // handling placeholder
-    var placeholder = null;
-    // labels have higher priority
-    if (!label && ctx.auto !== 'none') {
-      placeholder = !t.Nil.is(opts.placeholder) ? opts.placeholder : ctx.getDefaultLabel();
-    }
-
-    // handling name attribute
-    var name = opts.name || ctx.name;
-
-    // formatting
-    var value = listTransformer.format(this.state.value);
-
-    // handling errors
-    var error = t.Func.is(opts.error) ? opts.error(this.state.value) : opts.error;
-
-    // using the custom template defined above
-    return search({
-      config: opts.config,
-      disabled: opts.disabled,
-      error: error,
-      hasError: this.state.hasError,
-      help: opts.help,
-      label: label,
-      name: name,
-      onChange: this.onChange,
-      placeholder: placeholder,
-      type: 'search',
-      value: value
-    });
-
+  // handling label
+  var label = opts.label;
+  if (!label && ctx.auto === 'labels') {
+    // if labels are auto generated, get the default label
+    label = ctx.getDefaultLabel();
   }
-});
 
+  // handling placeholder
+  var placeholder = null;
+  // labels have higher priority
+  if (!label && ctx.auto !== 'none') {
+    placeholder = !t.Nil.is(opts.placeholder) ? opts.placeholder : ctx.getDefaultLabel();
+  }
+
+  // handling name attribute
+  var name = opts.name || ctx.name;
+
+  // handling value
+  var value = !t.Nil.is(opts.value) ? opts.value : !t.Nil.is(ctx.value) ? ctx.value : null;
+
+  //
+  // return a ReactClass
+  //
+
+  return React.createClass({
+
+    getInitialState: function () {
+      return {
+        hasError: !!opts.hasError,
+        value: value
+      };
+    },
+
+    onChange: function (value) {
+
+      // parsing
+      value = listTransformer.parse(value);
+
+      // notify change to parent
+      if (this.props.onChange) {
+        this.props.onChange(value);
+      }
+
+      // re-render
+      this.setState({value: value});
+    },
+
+    getValue: function () {
+
+      // ctx.report.type contains the type specified in the api call
+      var result = t.validate(this.state.value, ctx.report.type);
+      this.setState({
+        hasError: !result.isValid(),
+        value: result.value
+      });
+
+      // return a ResultValidation instance
+      return result;
+    },
+
+    render: function () {
+
+      // formatting
+      var value = listTransformer.format(this.state.value);
+
+      // handling errors
+      var error = opts.error;
+      if (this.state.hasError) {
+        // show the error message only if there is an error
+        error = t.Func.is(error) ? error(this.state.value) : error
+      }
+
+      return search({
+        config: opts.config,
+        disabled: opts.disabled,
+        error: error,
+        hasError: this.state.hasError,
+        help: opts.help,
+        label: label,
+        name: name,
+        onChange: this.onChange,
+        placeholder: placeholder,
+        type: 'search',
+        value: value
+      });
+
+    }
+  });
+
+}
 
 render('38', Search2, {
   fields: {
     search: {
-      factory: SearchComponent
+      factory: searchFactory
     }
+  },
+  value: {
+    search: ['climbing', 'yosemite']
   }
-}, {
-  search: ['climbing', 'yosemite']
 });
 
 // ===============================================
@@ -676,82 +694,7 @@ render('43', Person7, {
 
 // ===============================================
 
-var Person8 = t.struct({
-  name: t.Str,
-  surname: t.Str
-});
-
-var Person9 = t.struct({
-  name: t.Str,
-  surname: t.Str,
-  age: t.Num
-});
-
-(function render(i) {
-
-  var formPreview = document.getElementById('p' + i);
-  var Form = t.form.Form;
-
-  var App  = React.createClass({
-
-    getInitialState: function () {
-      return {
-        type: Person8,
-        options: {
-          fields: {
-            name: {
-              help: 'Type "a" to change the form configuration on the fly'
-            }
-          }
-        },
-        value: {}
-      };
-    },
-
-    onClick: function () {
-      var value = this.refs.form.getValue();
-      if (value) {
-        var valuePreview = document.getElementById('v' + i)
-        valuePreview.style.display = 'block';
-        valuePreview.innerHTML = JSON.stringify(value, null, 2);
-      }
-    },
-
-    onChange: function (value) {
-      if (value.name === 'a') {
-        this.state.type = Person9;
-        this.state.options.fields.surname = {disabled: true};
-      }
-      this.state.value = value;
-      this.forceUpdate();
-    },
-
-    render: function () {
-      return (
-        React.DOM.div(null,
-          React.createFactory(Form)({
-            ref: 'form',
-            type: this.state.type,
-            options: this.state.options,
-            value: this.state.value,
-            onChange: this.onChange
-          }),
-          React.DOM.button({
-            onClick: this.onClick,
-            className: 'btn btn-primary'
-          }, 'Click me')
-        )
-      );
-    }
-
-  });
-
-  React.render(React.createFactory(App)(), formPreview);
-})('44');
-
-// ===============================================
-
-render('45', Person7, null, null, true);
+render('44', Person7, {}, true);
 
 // ===============================================
 

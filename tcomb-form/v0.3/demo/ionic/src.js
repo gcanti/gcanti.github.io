@@ -4,7 +4,7 @@ var React = require('react');
 var t = require('../../../.');
 
 // configure ionic plugin
-t.form.config.templates = require('../../../lib/skins/ionic');
+t.form.config.templates = require('../../../lib/templates/ionic');
 
 var Account = t.struct({
   firstName: t.Str,
@@ -12,11 +12,9 @@ var Account = t.struct({
   email: t.maybe(t.Str)
 });
 
-var Form = t.form.Form;
-
-var options = {
+var Form = t.form.create(Account, {
   auto: 'labels'
-};
+});
 
 var App = React.createClass({displayName: 'App',
 
@@ -36,11 +34,7 @@ var App = React.createClass({displayName: 'App',
           React.createElement("h1", {className: "title"}, "Sign up")
         ),
         React.createElement("div", {className: "content has-header"},
-          React.createFactory(Form)({
-            ref: 'form',
-            type: Account,
-            options: options
-          }),
+          React.createElement(Form, {ref: "form"}),
           React.createElement("div", {className: "padding"},
             React.createElement("button", {onClick: this.onClick, className: "button button-block button-positive"}, "Create Account")
           )

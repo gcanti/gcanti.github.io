@@ -52,7 +52,7 @@ var scripts = [
   {id: 'subtype', label: 'Subtypes'},
   {id: 'list', label: 'Lists'},
   {id: 'nested', label: 'Nested structures'},
-  {id: 'auto:placeholders', label: 'Automatically generated placeholders'},
+  {id: 'auto:labels', label: 'Automatically generated labels'},
   {id: 'defaultValue', label: 'Default values'},
   {id: 'label-help', label: 'Fieldset label and help'},
   {id: 'subtype-struct', label: 'Struct subtypes'},
@@ -74,7 +74,7 @@ document.getElementById('examples').innerHTML = examplesHtml;
 
 var $code =       document.getElementById('code');
 var $preview =    document.getElementById('preview');
-var $value =      document.getElementById('getValue');
+var $value =      document.getElementById('value');
 var $examples =   document.getElementById('examples');
 var POSTFIX =     document.getElementById('postfix').innerHTML;
 

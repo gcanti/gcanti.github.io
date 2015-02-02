@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>tcomb-form v0.4 playground</title>
+    <title>tcomb-form v0.3 playground</title>
     <!--[if lt IE 9]>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/es5-shim/4.0.5/es5-shim.min.js"></script>
@@ -33,7 +33,7 @@
       <header>
         <div class="row">
           <div class="col-xs-6">
-            <a href="../index.html">tcomb-form v0.4</a>
+            <a href="../index.html">tcomb-form v0.3</a>
           </div>
           <div class="col-xs-6 text-right">
             Open source (MIT). Made by Giulio Canti
@@ -42,7 +42,7 @@
       </header>
       <div class="row">
         <div class="col-sm-12">
-          <h1>tcomb-form v0.4 playground</h1>
+          <h1>tcomb-form v0.3 playground</h1>
         </div>
       </div>
       <div class="row">
@@ -67,15 +67,13 @@
               <option value="../css/flatly.css">Flatly</option>
               <option value="../css/paper.css">Paper</option>
             </select>
-          <div id="getValue"></div>
+          <div id="value"></div>
           <div id="preview" class="preview"></div>
           </div>
         </div>
       </div>
     </div>
 <script type="text/postfix" id="postfix">
-var Form = t.form.Form;
-
 React.createClass({
   onClick: function (evt) {
     evt.preventDefault();
@@ -87,12 +85,7 @@ React.createClass({
   render: function () {
     return (
       React.createElement("form", null,
-        React.createElement(Form, {
-          ref: "form",
-          type: type,
-          options: typeof options !== 'undefined' ? options : null,
-          value: typeof value !== 'undefined' ? value : null
-        }),
+        React.createElement(Form, {ref: "form"}),
         React.createElement("button", {className: "btn btn-primary", onClick: this.onClick}, "Click me")
       )
     );
@@ -100,34 +93,43 @@ React.createClass({
 });
 </script>
 <script type="text/example" id="required">// define a model
-var type = t.struct({
+var Person = t.struct({
   name: t.Str, // two string properties
   surname: t.Str
 });
+
+// get the form
+var Form = t.form.create(Person);
 </script>
 <script type="text/example" id="optional">// use t.maybe to define optional fields
-var type = t.struct({
+var Person = t.struct({
   name: t.Str,
   surname: t.Str,
   email: t.maybe(t.Str) // an optional string
 });
+
+var Form = t.form.create(Person);
 </script>
 <script type="text/example" id="numeric">// use t.Num to define numeric fields
-var type = t.struct({
+var Person = t.struct({
   name: t.Str,
   surname: t.Str,
   email: t.maybe(t.Str),
   age: t.Num // a numeric field
 });
+
+var Form = t.form.create(Person);
 </script>
 <script type="text/example" id="boolean">// use t.Bool to define a boolean field
-var type = t.struct({
+var Person = t.struct({
   name: t.Str,
   surname: t.Str,
   email: t.maybe(t.Str),
   age: t.Num,
   rememberMe: t.Bool // a boolean field
 });
+
+var Form = t.form.create(Person);
 </script>
 <script type="text/example" id="enums">// use t.enums to define an enum field
 var Gender = t.enums({
@@ -135,7 +137,7 @@ var Gender = t.enums({
   F: 'Female'
 });
 
-var type = t.struct({
+var Person = t.struct({
   name: t.Str,
   surname: t.Str,
   email: t.maybe(t.Str),
@@ -143,6 +145,8 @@ var type = t.struct({
   rememberMe: t.Bool,
   gender: Gender
 });
+
+var Form = t.form.create(Person);
 </script>
 <script type="text/example" id="subtype">var Gender = t.enums({
   M: 'Male',
@@ -154,7 +158,7 @@ var Positive = t.subtype(t.Num, function (n) {
   return n >= 0;
 });
 
-var type = t.struct({
+var Person = t.struct({
   name: t.Str,
   surname: t.Str,
   email: t.maybe(t.Str),
@@ -162,13 +166,15 @@ var type = t.struct({
   rememberMe: t.Bool,
   gender: Gender
 });
+
+var Form = t.form.create(Person);
 </script>
 <script type="text/example" id="list">// use t.list to define a list
-var type = t.list(t.Str);
+var Tags = t.list(t.Str);
 
-var options = {
+var Form = t.form.create(Tags, {
   // disableOrder: true // try to decomment this line to disable re-arranging
-};
+});
 </script>
 <script type="text/example" id="nested">// You can nest lists and structs at an arbitrary level
 var Person = t.struct({
@@ -176,9 +182,11 @@ var Person = t.struct({
   surname: t.Str
 });
 
-var type = t.list(Person);
+var Persons = t.list(Person);
+
+var Form = t.form.create(Persons);
 </script>
-<script type="text/example" id="auto:placeholders">var type = t.struct({
+<script type="text/example" id="auto:labels">var Person = t.struct({
   name: t.Str,
   surname: t.Str,
   email: t.maybe(t.Str),
@@ -186,11 +194,11 @@ var type = t.list(Person);
   rememberMe: t.Bool
 });
 
-// use the option auto: 'placeholders'
-var options = {
-  auto: 'placeholders' // try with `none` if you don't want
+// use the option auto: 'labels'
+var Form = t.form.create(Person, {
+  auto: 'labels' // try with `none` if you don't want
                  // neither labels nor placeholders
-};
+});
 </script>
 <script type="text/example" id="defaultValue">var value = {
   name: 'Giulio',
@@ -200,66 +208,73 @@ var options = {
   rememberMe: true
 };
 
-var type = t.struct({
+var Person = t.struct({
   name: t.Str,
   surname: t.Str,
   email: t.maybe(t.Str),
   age: t.Num,
   rememberMe: t.Bool
 });
+
+var Form = t.form.create(Person, {
+  // disabled: true, // try to decomment this line to disable the whole fieldset
+  value: value
+});
 </script>
 <script type="text/example" id="label-help">// You can set the fieldset legend with the `label` option
 // and an help text with the `help` option
 
-var type = t.struct({
+var Person = t.struct({
   name: t.Str,
   surname: t.Str
 });
 
-var options = {
+var Form = t.form.create(Person, {
   label: 'A form title',
   help: 'A form help',
   // try to decomment the lines below
   // hasError: true,
   // error: 'A custom error message'
-};
+});
 </script>
 <script type="text/example" id="subtype-struct">// if notifyMe === true then email is required
 var predicate = function (person) {
   return person.notifyMe === false || (!t.Nil.is(person.email));
 };
 
-var type = t.subtype(t.struct({
+var Person = t.subtype(t.struct({
   name: t.Str,
   notifyMe: t.Bool,
   email: t.maybe(t.Str)
 }), predicate);
 
-var options = {
+var Form = t.form.create(Person, {
   error: 'Insert your email if you want to be notified'
-};
+});
 </script>
 <script type="text/example" id="subtype-list">// at least two tags
 var predicate = function (tags) {
   return tags.length >= 2;
 };
 
-var type = t.subtype(t.list(t.Str), predicate);
+var Tags = t.subtype(t.list(t.Str), predicate);
 
-var options = {
+var Form = t.form.create(Tags, {
   error: 'Insert at least two tags'
-};
+});
 </script>
 <script type="text/example" id="dynamic">
 var fields = {};
 for (var i = 0; i < 100 ; i++ ) {
   fields['field' + i] = t.Str;
 }
-var type = t.struct(fields);
+var Model = t.struct(fields);
+
+var Form = t.form.create(Model);
 </script>
 
   </body>
-  <script type="text/javascript" src="../js/react-0.12.2.js"></script>
+  <script type="text/javascript" src="../js/react.js"></script>
   <script type="text/javascript" src="bundle.js"></script>
   <!-- Google Analytics -->
   <script>
