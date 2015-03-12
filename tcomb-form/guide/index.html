@@ -882,7 +882,7 @@ var options = {
           <p>To customize the "skin" of tcomb-form you have to write a <em>template</em>. A template is simply a function with the following signature:</p>
           <pre><code>function(locals) -> UVDOM | ReactElement</code></pre>
           <p>where <code>locals</code> is an object contaning the "recipe" for rendering the input and is built by tcomb-form for you. The returned value can be a <a href="https://github.com/gcanti/uvdom">UVDOM</a> or a ReactElement.</p>
-          <p>Let's build a template for a search textbox styled with Bootstrap. tcomb-form will pass to your template the following recipe (you can find all the recipes in <code>lib/protocols/theme.js</code>):</p>
+          <p>Let's build a template for a search textbox styled with Bootstrap. tcomb-form will pass to your template the following recipe (you can find all the recipes in <code>lib/skin.js</code>):</p>
           <pre><code>
 var Textbox = struct({
   autoFocus: maybe(Bool),   // should receive the focus on start
