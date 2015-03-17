@@ -78,6 +78,7 @@
                     <li><a href="#textbox-disabled">Disabled</a></li>
                     <li><a href="#textbox-error">Error message</a></li>
                     <li><a href="#textbox-autoFocus">Auto focus</a></li>
+                    <li><a href="#textbox-className">className</a></li>
                   </ul>
                 </li>
                 <li>Checkbox
@@ -687,6 +688,18 @@ var options = {
 };
           </code></pre>
 
+          <a name="textbox-className"><h3>className</h3></a>
+          <p>Adds a custom className to the <code>&lt;input /&gt;</code> tag.</p>
+          <pre><code>
+var options = {
+  fields: {
+    mytext: {
+      className: 'myClassName'
+    }
+  }
+};
+          </code></pre>
+
           <h2>Checkbox options</h2>
 
           <a name="checkbox-common"><h3>Common options</h3></a>
@@ -698,6 +711,7 @@ var options = {
             <li><code>hasError</code></li>
             <li><code>error</code></li>
             <li><code>autoFocus</code></li>
+            <li><code>className</code></li>
           </ul>
           <pre><code>
 var Checkbox = t.struct({
@@ -732,6 +746,7 @@ var options = {
             <li><code>hasError</code></li>
             <li><code>error</code></li>
             <li><code>autoFocus</code></li>
+            <li><code>className</code></li>
           </ul>
           <pre><code>
 var Select = t.struct({
@@ -756,7 +771,7 @@ var options = {
           </div>
 
           <a name="select-null-option"><h3>Null option</h3></a>
-          <p>You can customize the null options with the <code>nullOption</code> option:</p>
+          <p>You can customize the null option with the <code>nullOption</code> option:</p>
           <pre><code>
 var options = {
   fields: {
@@ -771,6 +786,11 @@ var options = {
             <div id="p28" class="form"></div>
             <pre id="v28" class="value"></pre>
           </div>
+
+          <p>You can remove the null option setting the <code>nullOption</code> option to <code>false</code>.</p>
+
+          <p class="alert alert-warning">Warning: when you set <code>nullOption = false</code> you must also set the Form's <code>value</code> prop for the select field.
+          </p>
 
           <p><b>Tech note.</b> A value equal to <code>nullOption.value</code> (default <code>''</code>) is converted to <code>null</code>.</p>
 
