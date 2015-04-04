@@ -411,7 +411,7 @@ render('33', t.list(Car), {
 
 // ===============================================
 
-var cx = require('react/lib/cx');
+var cx = require('classnames');
 
 function search(locals) {
 
@@ -498,7 +498,7 @@ render('36', Search2, {
 
 var listTransformer = {
   format: function (value) {
-    return value ? value.join(' ') : null;
+    return Array.isArray(value) ? value.join(' ') : value;
   },
   parse: function (value) {
     return value ? value.split(' ') : [];
@@ -511,7 +511,7 @@ render('37', Search2, {
   },
   fields: {
     search: {
-      factory: t.form.textbox,
+      factory: t.form.Textbox,
       transformer: listTransformer,
       help: 'Keywords are separated by spaces'
     }
@@ -526,11 +526,11 @@ var SearchComponent = React.createClass({displayName: "SearchComponent",
   getInitialState: function () {
     return {
       hasError: false,
-      value: this.props.value
+      value: listTransformer.format(this.props.value)
     };
   },
   componentWillReceiveProps: function (props) {
-    this.setState({value: props.value});
+    this.setState({value: listTransformer.format(props.value)});
   },
   shouldComponentUpdate: function (nextProps, nextState) {
     return nextState.value !== this.state.value ||
@@ -541,13 +541,13 @@ var SearchComponent = React.createClass({displayName: "SearchComponent",
       nextProps.onChange !== this.props.onChange;
   },
   onChange: function (value) {
-    value = listTransformer.parse(value);
     this.setState({value: value}, function () {
       this.props.onChange(value);
     }.bind(this));
   },
   getValue: function () {
-    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    var value = listTransformer.parse(this.state.value)
+    var result = t.validate(value, this.props.ctx.report.type);
     this.setState({hasError: !result.isValid()});
     return result;
   },
@@ -572,8 +572,7 @@ var SearchComponent = React.createClass({displayName: "SearchComponent",
     // handling name attribute
     var name = opts.name || ctx.name;
 
-    // formatting
-    var value = listTransformer.format(this.state.value);
+    var value = this.state.value;
 
     // handling errors
     var error = t.Func.is(opts.error) ? opts.error(this.state.value) : opts.error;
@@ -776,7 +775,7 @@ themeSelector.onchange = function () {
 
 
 
-},{"../../.":2,"react":"react","react/lib/cx":28}],2:[function(require,module,exports){
+},{"../../.":2,"classnames":26,"react":"react"}],2:[function(require,module,exports){
 var t = require('./lib');
 
 // plug bootstrap skin
@@ -785,7 +784,7 @@ t.form.config.templates = require('./lib/skins/bootstrap');
 module.exports = t;
 
 
-},{"./lib":14,"./lib/skins/bootstrap":16}],3:[function(require,module,exports){
+},{"./lib":13,"./lib/skins/bootstrap":15}],3:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -826,7 +825,8 @@ var Context = struct({
   label: maybe(Str), // must be a string because of `i18n.optional` concatenation
   name: maybe(Str),
   report: Report,
-  templates: Obj
+  templates: Obj,
+  path: t.Arr
 }, 'Context');
 
 Context.prototype.getDefaultLabel = function () {
@@ -894,6 +894,7 @@ var Checkbox = struct({
   label: maybe(Label),
   name: maybe(t.Str),
   template: maybe(Func),
+  transformer: maybe(Transformer),
   className: maybe(Str)
 }, 'Checkbox');
 
@@ -911,9 +912,6 @@ var Order = t.enums({
 Order.getComparator = function (order) {
   return Order.meta.map[order];
 };
-
-// handle multiple attribute
-var SelectValue = union([Str, list(Str)], 'SelectValue');
 
 var NullOption = union([Option, Bool], 'NullOption');
 
@@ -935,6 +933,7 @@ var Select = struct({
   options: maybe(list(SelectOption)),
   order: maybe(Order),
   template: maybe(Func),
+  transformer: maybe(Transformer),
   className: maybe(Str)
 }, 'Select');
 
@@ -951,6 +950,7 @@ var Radio = struct({
   options: maybe(list(SelectOption)),
   order: maybe(Order),
   template: maybe(Func),
+  transformer: maybe(Transformer),
   className: maybe(Str)
 }, 'Select');
 
@@ -966,6 +966,7 @@ var Struct = struct({
   legend: maybe(Label),
   order: maybe(list(Label)),
   templates: maybe(Obj),
+  transformer: maybe(Transformer),
   className: maybe(Str)
 }, 'Struct');
 
@@ -983,6 +984,7 @@ var List = struct({
   error: maybe(ErrorMessage),
   legend: maybe(Label),
   templates: maybe(Obj),
+  transformer: maybe(Transformer),
   className: maybe(Str)
 }, 'List');
 
@@ -1001,14 +1003,13 @@ module.exports = {
   Textbox: Textbox,
   Checkbox: Checkbox,
   Select: Select,
-  SelectValue: SelectValue,
   Radio: Radio,
   Struct: Struct,
   List: List
 };
 
 
-},{"react":"react","tcomb-validation":31}],4:[function(require,module,exports){
+},{"react":"react","tcomb-validation":30}],4:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -1022,36 +1023,50 @@ var uuid = require('../util/uuid');
 var compile = require('uvdom/react').compile;
 var debug = require('debug')('component:Checkbox');
 
-function normalize(value) {
-  return !!t.maybe(t.Bool)(value);
-}
+var defaultTransformer = new api.Transformer({
+  format: function (value) {
+    return t.Nil.is(value) ? false : value;
+  },
+  parse: function (value) {
+    return t.Nil.is(value) ? false : value;
+  }
+});
 
 var Checkbox = React.createClass({
 
   displayName: 'Checkbox',
 
   getInitialState: function () {
+    var value = this.getTransformer().format(this.props.value);
     return {
       hasError: false,
-      value: normalize(this.props.value)
+      value: value
     };
   },
 
   componentWillReceiveProps: function (props) {
-    this.setState({value: normalize(props.value)});
+    var value = this.getTransformer().format(props.value);
+    this.setState({value: value});
   },
 
   shouldComponentUpdate: shouldComponentUpdate,
 
+  getTransformer: function () {
+    if (this.props.options && this.props.options.transformer) {
+      return this.props.options.transformer;
+    }
+    return defaultTransformer;
+  },
+
   onChange: function (value) {
-    value = normalize(value);
     this.setState({value: value}, function () {
-      this.props.onChange(value);
+      this.props.onChange(value, this.props.ctx.path);
     }.bind(this));
   },
 
   getValue: function () {
-    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    var value = this.getTransformer().parse(this.state.value);
+    var result = t.validate(value, this.props.ctx.report.type, this.props.ctx.path);
     this.setState({hasError: !result.isValid()});
     return result;
   },
@@ -1096,14 +1111,13 @@ var Checkbox = React.createClass({
 module.exports = Checkbox;
 
 
-},{"../api":3,"../skin":15,"../util/getError":17,"../util/merge":21,"../util/uuid":23,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":31,"uvdom/react":57}],5:[function(require,module,exports){
+},{"../api":3,"../skin":14,"../util/getError":18,"../util/merge":22,"../util/uuid":25,"./shouldComponentUpdate":11,"debug":27,"react":"react","tcomb-validation":30,"uvdom/react":56}],5:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
 var getComponent = require('../getComponent');
 var api = require('../api');
 var getReport = require('../util/getReport');
-var config =  require('../config');
 
 function noop() {}
 
@@ -1125,9 +1139,10 @@ var Form = React.createClass({
     var options = this.props.options;
     var ctx = new api.Context({
       auto: api.Auto.defaultValue,
-      i18n: config.i18n,
+      i18n: Form.i18n,
       report: getReport(type),
-      templates: config.templates
+      templates: Form.templates,
+      path: []
     });
     var factory = React.createFactory(getComponent(type, options));
     return factory({
@@ -1141,15 +1156,18 @@ var Form = React.createClass({
 
 });
 
+Form.i18n = require('../util/defaultLocaleBundle');
+
 module.exports = Form;
 
 
-},{"../api":3,"../config":12,"../getComponent":13,"../util/getReport":19,"react":"react"}],6:[function(require,module,exports){
+},{"../api":3,"../getComponent":12,"../util/defaultLocaleBundle":16,"../util/getReport":20,"react":"react"}],6:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
 var t = require('tcomb-validation');
 var shouldComponentUpdate = require('./shouldComponentUpdate');
+var defaultTransformer = require('../util/defaultTransformer');
 var getComponent = require('../getComponent');
 var api = require('../api');
 var skin = require('../skin');
@@ -1170,17 +1188,12 @@ function justify(value, keys) {
   return ret;
 }
 
-function normalize(value) {
-  t.maybe(t.Arr)(value);
-  return value || [];
-}
-
 var List = React.createClass({
 
   displayName: 'List',
 
   getInitialState: function () {
-    var value = normalize(this.props.value);
+    var value = this.getTransformer().format(this.props.value || []);
     return {
       hasError: false,
       value: value,
@@ -1189,7 +1202,7 @@ var List = React.createClass({
   },
 
   componentWillReceiveProps: function (props) {
-    var value = normalize(props.value);
+    var value = this.getTransformer().format(props.value || []);
     this.setState({
       value: value,
       keys: justify(value, this.state.keys)
@@ -1198,9 +1211,16 @@ var List = React.createClass({
 
   shouldComponentUpdate: shouldComponentUpdate,
 
-  onChange: function (value, keys) {
-    this.setState({value: value, keys: keys}, function () {
-      this.props.onChange(value);
+  getTransformer: function () {
+    if (this.props.options && this.props.options.transformer) {
+      return this.props.options.transformer;
+    }
+    return defaultTransformer;
+  },
+
+  onChange: function (value, keys, path) {
+    this.setState({value: value, keys: justify(value, keys)}, function () {
+      this.props.onChange(value, path || this.props.ctx.path);
     }.bind(this));
   },
 
@@ -1219,7 +1239,7 @@ var List = React.createClass({
 
     // handle subtype
     if (report.subtype && errors.length === 0) {
-      result = t.validate(value, report.type);
+      result = t.validate(value, report.type, this.props.ctx.path);
       hasError = !result.isValid();
       errors = errors.concat(result.errors);
     }
@@ -1232,13 +1252,13 @@ var List = React.createClass({
     evt.preventDefault();
     var value = this.state.value.concat(null);
     var keys = this.state.keys.concat(uuid());
-    this.onChange(value, keys);
+    this.onChange(value, keys, this.props.ctx.path.concat(value.length - 1));
   },
 
-  onItemChange: function (itemIndex, itemValue) {
+  onItemChange: function (itemIndex, itemValue, path) {
     var value = this.state.value.slice();
     value[itemIndex] = itemValue;
-    this.onChange(value, this.state.keys);
+    this.onChange(value, this.state.keys, path);
   },
 
   removeItem: function (i, evt) {
@@ -1247,7 +1267,7 @@ var List = React.createClass({
     value.splice(i, 1);
     var keys = this.state.keys.slice();
     keys.splice(i, 1);
-    this.onChange(value, keys);
+    this.onChange(value, keys, this.props.ctx.path.concat(i));
   },
 
   moveUpItem: function (i, evt) {
@@ -1277,7 +1297,7 @@ var List = React.createClass({
     t.assert(!ctx.report.maybe, 'maybe lists are not supported');
     var auto = opts.auto || ctx.auto;
     var i18n = opts.i18n || ctx.i18n;
-    var value = t.Arr(this.state.value || []);
+    var value = this.state.value || [];
 
     // handle legend
     var legend = opts.legend; // always use the option value if is manually set
@@ -1310,7 +1330,8 @@ var List = React.createClass({
             label:      null,
             name:       ctx.name + '[' + i + ']',
             report:     new getReport(itemType),
-            templates:  templates
+            templates:  templates,
+            path:       ctx.path.concat(i)
           })
         }),
         key: this.state.keys[i],
@@ -1346,7 +1367,7 @@ module.exports = List;
 
 
 
-},{"../api":3,"../getComponent":13,"../skin":15,"../util/getError":17,"../util/getReport":19,"../util/merge":21,"../util/move":22,"../util/uuid":23,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":31,"uvdom/react":57}],7:[function(require,module,exports){
+},{"../api":3,"../getComponent":12,"../skin":14,"../util/defaultTransformer":17,"../util/getError":18,"../util/getReport":20,"../util/merge":22,"../util/move":23,"../util/uuid":25,"./shouldComponentUpdate":11,"debug":27,"react":"react","tcomb-validation":30,"uvdom/react":56}],7:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -1354,6 +1375,7 @@ var t = require('tcomb-validation');
 var api = require('../api');
 var skin = require('../skin');
 var shouldComponentUpdate = require('./shouldComponentUpdate');
+var defaultTransformer = require('../util/defaultTransformer');
 var getError = require('../util/getError');
 var merge = require('../util/merge');
 var uuid = require('../util/uuid');
@@ -1361,36 +1383,41 @@ var getOptionsOfEnum = require('../util/getOptionsOfEnum');
 var compile = require('uvdom/react').compile;
 var debug = require('debug')('component:Radio');
 
-function normalize(value) {
-  return t.maybe(api.SelectValue)(value);
-}
-
 var Radio = React.createClass({
 
   displayName: 'Radio',
 
   getInitialState: function () {
+    var value = this.getTransformer().format(this.props.value);
     return {
       hasError: false,
-      value: normalize(this.props.value)
+      value: value
     };
   },
 
   componentWillReceiveProps: function (props) {
-    this.setState({value: normalize(props.value)});
+    var value = this.getTransformer().format(props.value);
+    this.setState({value: value});
   },
 
   shouldComponentUpdate: shouldComponentUpdate,
 
+  getTransformer: function () {
+    if (this.props.options && this.props.options.transformer) {
+      return this.props.options.transformer;
+    }
+    return defaultTransformer;
+  },
+
   onChange: function (value) {
-    value = normalize(value);
     this.setState({value: value}, function () {
-      this.props.onChange(value);
+      this.props.onChange(value, this.props.ctx.path);
     }.bind(this));
   },
 
   getValue: function () {
-    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    var value = this.getTransformer().parse(this.state.value);
+    var result = t.validate(value, this.props.ctx.report.type, this.props.ctx.path);
     this.setState({hasError: !result.isValid()});
     return result;
   },
@@ -1444,7 +1471,7 @@ var Radio = React.createClass({
 module.exports = Radio;
 
 
-},{"../api":3,"../skin":15,"../util/getError":17,"../util/getOptionsOfEnum":18,"../util/merge":21,"../util/uuid":23,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":31,"uvdom/react":57}],8:[function(require,module,exports){
+},{"../api":3,"../skin":14,"../util/defaultTransformer":17,"../util/getError":18,"../util/getOptionsOfEnum":19,"../util/merge":22,"../util/uuid":25,"./shouldComponentUpdate":11,"debug":27,"react":"react","tcomb-validation":30,"uvdom/react":56}],8:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -1452,6 +1479,7 @@ var t = require('tcomb-validation');
 var api = require('../api');
 var skin = require('../skin');
 var shouldComponentUpdate = require('./shouldComponentUpdate');
+var defaultTransformer = require('../util/defaultTransformer');
 var getError = require('../util/getError');
 var getReport = require('../util/getReport');
 var merge = require('../util/merge');
@@ -1460,36 +1488,41 @@ var getOptionsOfEnum = require('../util/getOptionsOfEnum');
 var compile = require('uvdom/react').compile;
 var debug = require('debug')('component:Select');
 
-function normalize(value) {
-  return t.maybe(api.SelectValue)(value);
-}
-
 var Select = React.createClass({
 
   displayName: 'Select',
 
   getInitialState: function () {
+    var value = this.getTransformer().format(this.props.value);
     return {
       hasError: false,
-      value: normalize(this.props.value)
+      value: value
     };
   },
 
   componentWillReceiveProps: function (props) {
-    this.setState({value: normalize(props.value)});
+    var value = this.getTransformer().format(props.value);
+    this.setState({value: value});
   },
 
   shouldComponentUpdate: shouldComponentUpdate,
 
+  getTransformer: function () {
+    if (this.props.options && this.props.options.transformer) {
+      return this.props.options.transformer;
+    }
+    return defaultTransformer;
+  },
+
   onChange: function (value) {
-    value = normalize(value);
     this.setState({value: value}, function () {
-      this.props.onChange(value);
+      this.props.onChange(value, this.props.ctx.path);
     }.bind(this));
   },
 
   getValue: function () {
-    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    var value = this.getTransformer().parse(this.state.value);
+    var result = t.validate(value, this.props.ctx.report.type, this.props.ctx.path);
     this.setState({hasError: !result.isValid()});
     return result;
   },
@@ -1562,12 +1595,13 @@ var Select = React.createClass({
 module.exports = Select;
 
 
-},{"../api":3,"../skin":15,"../util/getError":17,"../util/getOptionsOfEnum":18,"../util/getReport":19,"../util/merge":21,"../util/uuid":23,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":31,"uvdom/react":57}],9:[function(require,module,exports){
+},{"../api":3,"../skin":14,"../util/defaultTransformer":17,"../util/getError":18,"../util/getOptionsOfEnum":19,"../util/getReport":20,"../util/merge":22,"../util/uuid":25,"./shouldComponentUpdate":11,"debug":27,"react":"react","tcomb-validation":30,"uvdom/react":56}],9:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
 var t = require('tcomb-validation');
 var shouldComponentUpdate = require('./shouldComponentUpdate');
+var defaultTransformer = require('../util/defaultTransformer');
 var getComponent = require('../getComponent');
 var api = require('../api');
 var skin = require('../skin');
@@ -1578,33 +1612,37 @@ var getReport = require('../util/getReport');
 var compile = require('uvdom/react').compile;
 var debug = require('debug')('component:Struct');
 
-function normalize(value) {
-  t.maybe(t.Obj)(value);
-  return value || {};
-}
-
 var Struct = React.createClass({
 
   displayName: 'Struct',
 
   getInitialState: function () {
+    var value = this.getTransformer().format(this.props.value || {});
     return {
       hasError: false,
-      value: normalize(this.props.value)
+      value: value
     };
   },
 
   componentWillReceiveProps: function (props) {
-    this.setState({value: normalize(props.value)});
+    var value = this.getTransformer().format(props.value || {});
+    this.setState({value: value});
   },
 
   shouldComponentUpdate: shouldComponentUpdate,
 
-  onChange: function (fieldName, fieldValue) {
+  getTransformer: function () {
+    if (this.props.options && this.props.options.transformer) {
+      return this.props.options.transformer;
+    }
+    return defaultTransformer;
+  },
+
+  onChange: function (fieldName, fieldValue, path) {
     var value = t.mixin({}, this.state.value);
     value[fieldName] = fieldValue;
     this.setState({value: value}, function () {
-      this.props.onChange(value);
+      this.props.onChange(value, path);
     }.bind(this));
   },
 
@@ -1627,7 +1665,7 @@ var Struct = React.createClass({
       value = new report.innerType(value);
       // handle subtype
       if (report.subtype && errors.length === 0) {
-        result = t.validate(value, report.type);
+        result = t.validate(value, report.type, this.props.ctx.path);
         hasError = !result.isValid();
         errors = errors.concat(result.errors);
       }
@@ -1653,7 +1691,7 @@ var Struct = React.createClass({
     }
 
     var config = merge(ctx.config, opts.config);
-    var value = this.state.value;
+    var value = this.state.value || {};
     var props = ctx.report.innerType.meta.props;
     var i18n =  opts.i18n || ctx.i18n;
     var templates = merge(ctx.templates, opts.templates);
@@ -1676,7 +1714,8 @@ var Struct = React.createClass({
             label:      humanize(prop),
             name:       ctx.name ? ctx.name + '[' + prop + ']' : prop,
             report:     new getReport(propType),
-            templates:  templates
+            templates:  templates,
+            path:       ctx.path.concat(prop)
           })
         });
       }
@@ -1706,7 +1745,7 @@ var Struct = React.createClass({
 module.exports = Struct;
 
 
-},{"../api":3,"../getComponent":13,"../skin":15,"../util/getError":17,"../util/getReport":19,"../util/humanize":20,"../util/merge":21,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":31,"uvdom/react":57}],10:[function(require,module,exports){
+},{"../api":3,"../getComponent":12,"../skin":14,"../util/defaultTransformer":17,"../util/getError":18,"../util/getReport":20,"../util/humanize":21,"../util/merge":22,"./shouldComponentUpdate":11,"debug":27,"react":"react","tcomb-validation":30,"uvdom/react":56}],10:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -1714,45 +1753,60 @@ var t = require('tcomb-validation');
 var api = require('../api');
 var skin = require('../skin');
 var shouldComponentUpdate = require('./shouldComponentUpdate');
+var numberTransformer = require('../util/numberTransformer');
 var getError = require('../util/getError');
 var merge = require('../util/merge');
 var uuid = require('../util/uuid');
-var config = require('../config');
 var compile = require('uvdom/react').compile;
 var debug = require('debug')('component:Textbox');
 
-function normalize(value) {
-  return (t.Str.is(value) && value.trim() === '') ? null :
-    !t.Nil.is(value) ? value :
-    null;
-}
+var defaultTransformer = new api.Transformer({
+  format: function (value) {
+    return t.Nil.is(value) ? null : value;
+  },
+  parse: function (value) {
+    return (t.Str.is(value) && value.trim() === '') || t.Nil.is(value) ? null : value;
+  }
+});
 
 var Textbox = React.createClass({
 
   displayName: 'Textbox',
 
   getInitialState: function () {
+    var value = this.getTransformer().format(this.props.value);
     return {
       hasError: false,
-      value: normalize(this.props.value)
+      value: value
     };
   },
 
   componentWillReceiveProps: function (props) {
-    this.setState({value: normalize(props.value)});
+    var value = this.getTransformer().format(props.value);
+    this.setState({value: value});
   },
 
   shouldComponentUpdate: shouldComponentUpdate,
 
+  getTransformer: function () {
+    if (this.props.options && this.props.options.transformer) {
+      return this.props.options.transformer;
+    }
+    if (this.props.ctx.report.innerType === t.Num) {
+      return numberTransformer;
+    }
+    return defaultTransformer;
+  },
+
   onChange: function (value) {
-    value = normalize(value);
     this.setState({value: value}, function () {
-      this.props.onChange(value);
+      this.props.onChange(value, this.props.ctx.path);
     }.bind(this));
   },
 
   getValue: function () {
-    var result = t.validate(this.state.value, this.props.ctx.report.type);
+    var value = this.getTransformer().parse(this.state.value);
+    var result = t.validate(value, this.props.ctx.report.type, this.props.ctx.path);
     this.setState({hasError: !result.isValid()});
     return result;
   },
@@ -1782,10 +1836,7 @@ var Textbox = React.createClass({
     }
 
     var value = this.state.value;
-    var transformer = opts.transformer || config.transformers[t.getTypeName(ctx.report.innerType)];
-    if (transformer) {
-      value = transformer.format(value);
-    }
+
     return {
       autoFocus: opts.autoFocus,
       config: merge(ctx.config, opts.config),
@@ -1796,12 +1847,7 @@ var Textbox = React.createClass({
       id: id,
       label: label,
       name: name,
-      onChange: function (value) {
-        if (transformer) {
-          value = transformer.parse(value);
-        }
-        this.onChange(value);
-      }.bind(this),
+      onChange: this.onChange,
       placeholder: placeholder,
       type: opts.type || 'text',
       value: value,
@@ -1820,7 +1866,7 @@ var Textbox = React.createClass({
 module.exports = Textbox;
 
 
-},{"../api":3,"../config":12,"../skin":15,"../util/getError":17,"../util/merge":21,"../util/uuid":23,"./shouldComponentUpdate":11,"debug":25,"react":"react","tcomb-validation":31,"uvdom/react":57}],11:[function(require,module,exports){
+},{"../api":3,"../skin":14,"../util/getError":18,"../util/merge":22,"../util/numberTransformer":24,"../util/uuid":25,"./shouldComponentUpdate":11,"debug":27,"react":"react","tcomb-validation":30,"uvdom/react":56}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function (nextProps, nextState) {
@@ -1835,45 +1881,7 @@ module.exports = function (nextProps, nextState) {
 },{}],12:[function(require,module,exports){
 'use strict';
 
-var api = require('./api');
 var t = require('tcomb-validation');
-
-var defaultLocaleBundle = new api.I18n({
-  optional: ' (optional)',
-  add: 'Add',
-  remove: 'Remove',
-  up: 'Up',
-  down: 'Down'
-});
-
-var NumberTransformer = new api.Transformer({
-  format: function (value) {
-    return t.Nil.is(value) ? value : String(value);
-  },
-  parse: function (value) {
-    if (t.Str.is(value) && value.length > 0 && value[value.length - 1] === '.') { return value; }
-    var n = parseFloat(value);
-    var isNumeric = (value - n + 1) >= 0;
-    return isNumeric ? n : value;
-  }
-});
-
-module.exports = {
-  i18n: defaultLocaleBundle,
-  transformers: {
-    Num: NumberTransformer
-  },
-  irreducibles: {
-    Bool: require('./components/Checkbox')
-  }
-};
-
-
-},{"./api":3,"./components/Checkbox":4,"tcomb-validation":31}],13:[function(require,module,exports){
-'use strict';
-
-var t = require('tcomb-validation');
-var config = require('./config');
 
 // here requires must be dynamic since there is a circular
 // dependency between getComponent and the components
@@ -1883,12 +1891,9 @@ function getComponent(type, options) {
   }
   switch (type.meta.kind) {
     case 'irreducible' :
-      var name = t.getTypeName(type);
-      if (t.Func.is(config.irreducibles[name])) {
-        return config.irreducibles[name];
-      }
-      // fallback on textbox
-      return require('./components/Textbox');
+    return type === t.Bool ?
+      require('./components/Checkbox') :
+      require('./components/Textbox');
     case 'struct' :
       return require('./components/Struct');
     case 'enums' :
@@ -1904,13 +1909,15 @@ function getComponent(type, options) {
 module.exports = getComponent;
 
 
-},{"./components/List":6,"./components/Select":8,"./components/Struct":9,"./components/Textbox":10,"./config":12,"tcomb-validation":31}],14:[function(require,module,exports){
+},{"./components/Checkbox":4,"./components/List":6,"./components/Select":8,"./components/Struct":9,"./components/Textbox":10,"tcomb-validation":30}],13:[function(require,module,exports){
 var t = require('tcomb-validation');
+
+var Form = require('./components/Form');
 
 t.form = {
   debug:    require('debug'),
-  config:   require('./config'),
-  Form:     require('./components/Form'),
+  config:   Form,
+  Form:     Form,
   Textbox:  require('./components/Textbox'),
   Select:   require('./components/Select'),
   Checkbox: require('./components/Checkbox'),
@@ -1922,7 +1929,7 @@ t.form = {
 module.exports = t;
 
 
-},{"./components/Checkbox":4,"./components/Form":5,"./components/List":6,"./components/Radio":7,"./components/Select":8,"./components/Struct":9,"./components/Textbox":10,"./config":12,"debug":25,"tcomb-validation":31}],15:[function(require,module,exports){
+},{"./components/Checkbox":4,"./components/Form":5,"./components/List":6,"./components/Radio":7,"./components/Select":8,"./components/Struct":9,"./components/Textbox":10,"debug":27,"tcomb-validation":30}],14:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -1931,6 +1938,7 @@ var Str = t.Str;
 var Bool = t.Bool;
 var Func = t.Func;
 var Obj = t.Obj;
+var Any = t.Any;
 var maybe = t.maybe;
 var list = t.list;
 var struct = t.struct;
@@ -1974,7 +1982,7 @@ var Textbox = struct({
   onChange: Func,           // should call this function with the changed value
   placeholder: maybe(Str),  // should show a placeholder
   type: TypeAttr,           // should use this as type attribute
-  value: t.Any,             // should use this as value attribute
+  value: Any,               // should use this as value attribute
   className: maybe(Str)     // should add this to the className attribute
 }, 'Textbox');
 
@@ -1989,12 +1997,9 @@ var Checkbox = struct({
   label: Label,             // checkboxes must always have a label
   name: Str,
   onChange: Func,
-  value: Bool,
+  value: Any,
   className: maybe(Str)
 }, 'Checkbox');
-
-// handle multiple attribute
-var SelectValue = union([Str, list(Str)], 'SelectValue');
 
 var Select = struct({
   autoFocus: maybe(Bool),
@@ -2009,7 +2014,7 @@ var Select = struct({
   name: Str,
   onChange: Func,
   options: list(SelectOption),
-  value: maybe(SelectValue),
+  value: Any,
   className: maybe(Str)
 }, 'Select');
 
@@ -2025,11 +2030,9 @@ var Radio = struct({
   name: Str,
   onChange: Func,
   options: list(Option),
-  value: maybe(Str),
+  value: Any,
   className: maybe(Str)
 }, 'Radio');
-
-var StructValue = t.dict(Str, t.Any, 'StructValue');
 
 var Struct = struct({
   config: maybe(Obj),
@@ -2040,7 +2043,7 @@ var Struct = struct({
   inputs: t.dict(Str, ReactElement),
   legend: maybe(Label),
   order: list(Label),
-  value: maybe(StructValue),
+  value: Any,
   className: maybe(Str)
 }, 'Struct');
 
@@ -2064,7 +2067,7 @@ var List = struct({
   help: maybe(Label),
   items: list(ListItem),
   legend: maybe(Label),
-  value: maybe(list(t.Any)),
+  value: Any,
   className: maybe(Str)
 }, 'List');
 
@@ -2081,7 +2084,7 @@ module.exports = {
 };
 
 
-},{"react":"react","tcomb-validation":31}],16:[function(require,module,exports){
+},{"react":"react","tcomb-validation":30}],15:[function(require,module,exports){
 'use strict';
 
 var t = require('tcomb-validation');
@@ -2594,7 +2597,39 @@ module.exports = {
 };
 
 
-},{"../../skin":15,"tcomb-validation":31,"uvdom-bootstrap/form":33}],17:[function(require,module,exports){
+},{"../../skin":14,"tcomb-validation":30,"uvdom-bootstrap/form":32}],16:[function(require,module,exports){
+'use strict';
+
+var api = require('../api');
+
+module.exports = new api.I18n({
+  optional: ' (optional)',
+  add: 'Add',
+  remove: 'Remove',
+  up: 'Up',
+  down: 'Down'
+});
+
+
+
+},{"../api":3}],17:[function(require,module,exports){
+'use strict';
+
+var t = require('tcomb-validation');
+var api = require('../api');
+
+module.exports = new api.Transformer({
+  format: function (value) {
+    return t.Nil.is(value) ? null : value;
+  },
+  parse: function (value) {
+    return value;
+  }
+});
+
+
+
+},{"../api":3,"tcomb-validation":30}],18:[function(require,module,exports){
 'use strict';
 
 var t = require('tcomb-validation');
@@ -2606,7 +2641,7 @@ function getError(error, value) {
 module.exports = getError;
 
 
-},{"tcomb-validation":31}],18:[function(require,module,exports){
+},{"tcomb-validation":30}],19:[function(require,module,exports){
 'use strict';
 
 function getOptionsOfEnum(type) {
@@ -2622,7 +2657,7 @@ function getOptionsOfEnum(type) {
 module.exports = getOptionsOfEnum;
 
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 'use strict';
 
 function getReport(type) {
@@ -2658,7 +2693,7 @@ function getReport(type) {
 module.exports = getReport;
 
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 
 // thanks to https://github.com/epeli/underscore.string
@@ -2678,7 +2713,7 @@ function humanize(s){
 module.exports = humanize;
 
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 'use strict';
 
 var t = require('tcomb-validation');
@@ -2691,7 +2726,7 @@ function merge(a, b) {
 module.exports = merge;
 
 
-},{"tcomb-validation":31}],22:[function(require,module,exports){
+},{"tcomb-validation":30}],23:[function(require,module,exports){
 'use strict';
 
 function move(arr, fromIndex, toIndex) {
@@ -2703,7 +2738,26 @@ function move(arr, fromIndex, toIndex) {
 module.exports = move;
 
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
+'use strict';
+
+var t = require('tcomb-validation');
+var api = require('../api');
+
+module.exports = new api.Transformer({
+  format: function (value) {
+    return t.Nil.is(value) ? value : String(value);
+  },
+  parse: function (value) {
+    var n = parseFloat(value);
+    var isNumeric = (value - n + 1) >= 0;
+    return isNumeric ? n : value;
+  }
+});
+
+
+
+},{"../api":3,"tcomb-validation":30}],25:[function(require,module,exports){
 'use strict';
 
 function uuid() {
@@ -2716,95 +2770,39 @@ function uuid() {
 module.exports = uuid;
 
 
-},{}],24:[function(require,module,exports){
-// shim for using process in browser
+},{}],26:[function(require,module,exports){
+function classNames() {
+	var classes = '';
+	var arg;
 
-var process = module.exports = {};
+	for (var i = 0; i < arguments.length; i++) {
+		arg = arguments[i];
+		if (!arg) {
+			continue;
+		}
 
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canMutationObserver = typeof window !== 'undefined'
-    && window.MutationObserver;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
+		if ('string' === typeof arg || 'number' === typeof arg) {
+			classes += ' ' + arg;
+		} else if (Object.prototype.toString.call(arg) === '[object Array]') {
+			classes += ' ' + classNames.apply(null, arg);
+		} else if ('object' === typeof arg) {
+			for (var key in arg) {
+				if (!arg.hasOwnProperty(key) || !arg[key]) {
+					continue;
+				}
+				classes += ' ' + key;
+			}
+		}
+	}
+	return classes.substr(1);
+}
 
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
+// safely export classNames in case the script is included directly on a page
+if (typeof module !== 'undefined' && module.exports) {
+	module.exports = classNames;
+}
 
-    var queue = [];
-
-    if (canMutationObserver) {
-        var hiddenDiv = document.createElement("div");
-        var observer = new MutationObserver(function () {
-            var queueList = queue.slice();
-            queue.length = 0;
-            queueList.forEach(function (fn) {
-                fn();
-            });
-        });
-
-        observer.observe(hiddenDiv, { attributes: true });
-
-        return function nextTick(fn) {
-            if (!queue.length) {
-                hiddenDiv.setAttribute('yes', 'no');
-            }
-            queue.push(fn);
-        };
-    }
-
-    if (canPost) {
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -2981,7 +2979,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":26}],26:[function(require,module,exports){
+},{"./debug":28}],28:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -3180,7 +3178,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":27}],27:[function(require,module,exports){
+},{"ms":29}],29:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -3305,163 +3303,10 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],28:[function(require,module,exports){
-(function (process){
-/**
- * Copyright 2013-2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- *
- * @providesModule cx
- */
-
-/**
- * This function is used to mark string literals representing CSS class names
- * so that they can be transformed statically. This allows for modularization
- * and minification of CSS class names.
- *
- * In static_upstream, this function is actually implemented, but it should
- * eventually be replaced with something more descriptive, and the transform
- * that is used in the main stack should be ported for use elsewhere.
- *
- * @param string|object className to modularize, or an object of key/values.
- *                      In the object case, the values are conditions that
- *                      determine if the className keys should be included.
- * @param [string ...]  Variable list of classNames in the string case.
- * @return string       Renderable space-separated CSS className.
- */
-
-'use strict';
-var warning = require("./warning");
-
-var warned = false;
-
-function cx(classNames) {
-  if ("production" !== process.env.NODE_ENV) {
-    ("production" !== process.env.NODE_ENV ? warning(
-      warned,
-      'React.addons.classSet will be deprecated in a future version. See ' +
-      'http://fb.me/react-addons-classset'
-    ) : null);
-    warned = true;
-  }
-
-  if (typeof classNames == 'object') {
-    return Object.keys(classNames).filter(function(className) {
-      return classNames[className];
-    }).join(' ');
-  } else {
-    return Array.prototype.join.call(arguments, ' ');
-  }
-}
-
-module.exports = cx;
-
-}).call(this,require('_process'))
-},{"./warning":30,"_process":24}],29:[function(require,module,exports){
-/**
- * Copyright 2013-2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- *
- * @providesModule emptyFunction
- */
-
-function makeEmptyFunction(arg) {
-  return function() {
-    return arg;
-  };
-}
-
-/**
- * This function accepts and discards inputs; it has no side effects. This is
- * primarily useful idiomatically for overridable function endpoints which
- * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
- */
-function emptyFunction() {}
-
-emptyFunction.thatReturns = makeEmptyFunction;
-emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
-emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
-emptyFunction.thatReturnsNull = makeEmptyFunction(null);
-emptyFunction.thatReturnsThis = function() { return this; };
-emptyFunction.thatReturnsArgument = function(arg) { return arg; };
-
-module.exports = emptyFunction;
-
 },{}],30:[function(require,module,exports){
-(function (process){
-/**
- * Copyright 2014-2015, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- *
- * @providesModule warning
- */
-
-"use strict";
-
-var emptyFunction = require("./emptyFunction");
-
-/**
- * Similar to invariant but only logs a warning if the condition is not met.
- * This can be used to log issues in development environments in critical
- * paths. Removing the logging code for production environments will keep the
- * same logic and follow the same code paths.
- */
-
-var warning = emptyFunction;
-
-if ("production" !== process.env.NODE_ENV) {
-  warning = function(condition, format ) {for (var args=[],$__0=2,$__1=arguments.length;$__0<$__1;$__0++) args.push(arguments[$__0]);
-    if (format === undefined) {
-      throw new Error(
-        '`warning(condition, format, ...args)` requires a warning ' +
-        'message argument'
-      );
-    }
-
-    if (format.length < 10 || /^[s\W]*$/.test(format)) {
-      throw new Error(
-        'The warning format should be able to uniquely identify this ' +
-        'warning. Please, use a more descriptive format than: ' + format
-      );
-    }
-
-    if (format.indexOf('Failed Composite propType: ') === 0) {
-      return; // Ignore CompositeComponent proptype check.
-    }
-
-    if (!condition) {
-      var argIndex = 0;
-      var message = 'Warning: ' + format.replace(/%s/g, function()  {return args[argIndex++];});
-      console.warn(message);
-      try {
-        // --- Welcome to debugging React ---
-        // This error was thrown as a convenience so that you can use this stack
-        // to find the callsite that caused this warning to fire.
-        throw new Error(message);
-      } catch(x) {}
-    }
-  };
-}
-
-module.exports = warning;
-
-}).call(this,require('_process'))
-},{"./emptyFunction":29,"_process":24}],31:[function(require,module,exports){
 (function (root, factory) {
   'use strict';
-  if (typeof define === 'function' && define.amd) {
+  if (typeof define === 'function' && define.amd && typeof __fbBatchedBridgeConfig === 'undefined') {
     define(['tcomb'], factory);
   } else if (typeof exports === 'object') {
     module.exports = factory(require('tcomb'));
@@ -3529,8 +3374,8 @@ module.exports = warning;
   // validate
   //
 
-  function validate(x, type) {
-    return new ValidationResult(recurse(x, type, []));
+  function validate(x, type, path) {
+    return new ValidationResult(recurse(x, type, path || []));
   }
 
   function recurse(x, type, path) {
@@ -3676,10 +3521,10 @@ module.exports = warning;
 
 }));
 
-},{"tcomb":32}],32:[function(require,module,exports){
+},{"tcomb":31}],31:[function(require,module,exports){
 (function (root, factory) {
   'use strict';
-  if (typeof define === 'function' && define.amd) {
+  if (typeof define === 'function' && define.amd && typeof __fbBatchedBridgeConfig === 'undefined') {
     define([], factory);
   } else if (typeof exports === 'object') {
     module.exports = factory();
@@ -4398,7 +4243,7 @@ module.exports = warning;
 
 }));
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports = {
   getAddon: require('./lib/getAddon'),
   getAlert: require('./lib/getAlert'),
@@ -4422,7 +4267,7 @@ module.exports = {
   getStatic: require('./lib/getStatic'),
   getTextbox: require('./lib/getTextbox')
 };
-},{"./lib/getAddon":34,"./lib/getAlert":35,"./lib/getBreakpoints":36,"./lib/getButton":37,"./lib/getButtonGroup":38,"./lib/getCheckbox":39,"./lib/getCol":40,"./lib/getErrorBlock":41,"./lib/getFieldset":42,"./lib/getFormGroup":43,"./lib/getHelpBlock":44,"./lib/getInputGroup":45,"./lib/getLabel":46,"./lib/getOffsets":47,"./lib/getOptGroup":48,"./lib/getOption":49,"./lib/getRadio":50,"./lib/getRow":51,"./lib/getSelect":52,"./lib/getStatic":53,"./lib/getTextbox":54}],34:[function(require,module,exports){
+},{"./lib/getAddon":33,"./lib/getAlert":34,"./lib/getBreakpoints":35,"./lib/getButton":36,"./lib/getButtonGroup":37,"./lib/getCheckbox":38,"./lib/getCol":39,"./lib/getErrorBlock":40,"./lib/getFieldset":41,"./lib/getFormGroup":42,"./lib/getHelpBlock":43,"./lib/getInputGroup":44,"./lib/getLabel":45,"./lib/getOffsets":46,"./lib/getOptGroup":47,"./lib/getOption":48,"./lib/getRadio":49,"./lib/getRow":50,"./lib/getSelect":51,"./lib/getStatic":52,"./lib/getTextbox":53}],33:[function(require,module,exports){
 'use strict';
 
 function getAddon(addon) {
@@ -4438,7 +4283,7 @@ function getAddon(addon) {
 }
 
 module.exports = getAddon;
-},{}],35:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 
 function getAlert(opts) {
@@ -4459,7 +4304,7 @@ function getAlert(opts) {
 }
 
 module.exports = getAlert;
-},{}],36:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 'use strict';
 
 function getBreakpoints(breakpoints) {
@@ -4473,7 +4318,7 @@ function getBreakpoints(breakpoints) {
 }
 
 module.exports = getBreakpoints;
-},{}],37:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 'use strict';
 
 /*
@@ -4527,7 +4372,7 @@ function getButton(opts) {
 
 module.exports = getButton;
 
-},{}],38:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 function getButtonGroup(buttons) {
@@ -4545,7 +4390,7 @@ function getButtonGroup(buttons) {
 module.exports = getButtonGroup;
 
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 /*
@@ -4614,7 +4459,7 @@ function getCheckbox(opts) {
 }
 
 module.exports = getCheckbox;
-},{}],40:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 'use strict';
 
 var getBreakpoints = require('./getBreakpoints');
@@ -4633,7 +4478,7 @@ function getCol(opts) {
 }
 
 module.exports = getCol;
-},{"./getBreakpoints":36}],41:[function(require,module,exports){
+},{"./getBreakpoints":35}],40:[function(require,module,exports){
 'use strict';
 
 function getErrorBlock(opts) {
@@ -4652,7 +4497,7 @@ function getErrorBlock(opts) {
 module.exports = getErrorBlock;
 
 
-},{}],42:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 'use strict';
 
 function getFieldset(opts) {
@@ -4679,7 +4524,7 @@ function getFieldset(opts) {
 module.exports = getFieldset;
 
 
-},{}],43:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 'use strict';
 
 function getFormGroup(opts) {
@@ -4696,7 +4541,7 @@ function getFormGroup(opts) {
 }
 
 module.exports = getFormGroup;
-},{}],44:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 'use strict';
 
 /*
@@ -4730,7 +4575,7 @@ function getHelpBlock(opts) {
 module.exports = getHelpBlock;
 
 
-},{}],45:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 'use strict';
 
 function getInputGroup(children) {
@@ -4746,7 +4591,7 @@ function getInputGroup(children) {
 }
 
 module.exports = getInputGroup;
-},{}],46:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 var mixin = require('./mixin');
@@ -4789,7 +4634,7 @@ function getLabel(opts) {
 module.exports = getLabel;
 
 
-},{"./mixin":55}],47:[function(require,module,exports){
+},{"./mixin":54}],46:[function(require,module,exports){
 'use strict';
 
 function getOffsets(breakpoints) {
@@ -4803,7 +4648,7 @@ function getOffsets(breakpoints) {
 }
 
 module.exports = getOffsets;
-},{}],48:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 'use strict';
 
 var getOption = require('./getOption');
@@ -4837,7 +4682,7 @@ function getOptGroup(opts) {
 module.exports = getOptGroup;
 
 
-},{"./getOption":49}],49:[function(require,module,exports){
+},{"./getOption":48}],48:[function(require,module,exports){
 'use strict';
 
 /*
@@ -4866,7 +4711,7 @@ function getOption(opts) {
 module.exports = getOption;
 
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 /*
@@ -4941,7 +4786,7 @@ function getRadio(opts) {
 }
 
 module.exports = getRadio;
-},{}],51:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 function getRow(opts) {
@@ -4958,7 +4803,7 @@ function getRow(opts) {
 }
 
 module.exports = getRow;
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 /*
@@ -5017,7 +4862,7 @@ function getSelect(opts) {
 }
 
 module.exports = getSelect;
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 
 function getStatic(value) {
@@ -5033,7 +4878,7 @@ function getStatic(value) {
 }
 
 module.exports = getStatic;
-},{}],54:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 
 /*
@@ -5096,7 +4941,7 @@ function getTextbox(opts) {
 }
 
 module.exports = getTextbox;
-},{}],55:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 'use strict';
 
 function mixin(a, b) {
@@ -5110,39 +4955,9 @@ function mixin(a, b) {
 }
 
 module.exports = mixin;
-},{}],56:[function(require,module,exports){
-function classNames() {
-	var classes = '';
-	var arg;
-
-	for (var i = 0; i < arguments.length; i++) {
-		arg = arguments[i];
-		if (!arg) {
-			continue;
-		}
-
-		if ('string' === typeof arg || 'number' === typeof arg) {
-			classes += ' ' + arg;
-		} else if (Object.prototype.toString.call(arg) === '[object Array]') {
-			classes += ' ' + classNames.apply(null, arg);
-		} else if ('object' === typeof arg) {
-			for (var key in arg) {
-				if (!arg.hasOwnProperty(key) || !arg[key]) {
-					continue;
-				}
-				classes += ' ' + key;
-			}
-		}
-	}
-	return classes.substr(1);
-}
-
-// safely export classNames in case the script is included directly on a page
-if (typeof module !== 'undefined' && module.exports) {
-	module.exports = classNames;
-}
-
-},{}],57:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
+module.exports=require(26)
+},{"/Users/giulio/Documents/Projects/github/tcomb-form/node_modules/classnames/index.js":26}],56:[function(require,module,exports){
 'use strict';
 
 var React = require('react');
@@ -5211,4 +5026,4 @@ function mixin(x, y) {
 module.exports = {
   compile: compile
 };
-},{"classnames":56,"react":"react"}]},{},[1]);
+},{"classnames":55,"react":"react"}]},{},[1]);
