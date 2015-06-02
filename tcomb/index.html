@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>tcomb.js v1.0</title>
+    <title>tcomb.js</title>
     <meta name="description" content="Domain driven design and type checking for JavaScript">
     <meta name="keywords" content="JavaScript Domain Driven design type checking">
     <!--[if lt IE 9]>
@@ -56,7 +56,7 @@
   <body>
     <div class="landing-header">
       <div class="container">
-        <p class="lead">tcomb.js v1.0</p>
+        <p class="lead">tcomb.js</p>
         <h1>Domain driven design and <br/>type checking for JavaScript.</h1>
         <p class="lead">"Si vis pacem, para bellum"<br/>(Vegetius 5th century)</p>
       </div>
@@ -74,7 +74,7 @@
             <a href="https://github.com/gcanti/tcomb">Github</a>
           </div>
           <div class="col-xs-3">
-            <a href="guide/index.html">Docs</a>
+            <a href="https://github.com/gcanti/tcomb/blob/master/GUIDE.md">Docs</a>
           </div>
         </div>
       </div>
@@ -85,10 +85,21 @@
           <h2 class="text-center">The idea</h2>
           <p>What's a type? In tcomb <b>a type is represented by a function</b> T such that:</p>
           <ol>
-            <li><p>has signature T(value, ?mut) where value depends on the nature of T and the optional boolean mut makes the instance mutable (default false)</p></li>
+            <li><p>has signature T(value) where value depends on the nature of T</p></li>
             <li><p>is idempotent, that is T(T(value)) = T(value)</p></li>
             <li><p>owns a static function T.is(x) returning true if x is an instance of T</p></li>
           </ol>
+        </div>
+        <div class="col-md-4">
+          <h2 class="text-center">Features</h2>
+          <ul class="task-list">
+            <li><strong>immutability</strong>: instances are immutables in development mode</li>
+            <li><strong>speed</strong>: asserts are active only in development mode and stripped in production code.</li>
+            <li><strong>DDD</strong>: write complex domain models in a breeze and with a small code footprint</li>
+            <li><strong>debugging</strong>: you can customize the behaviour when an assert fails leveraging the power of Chrome DevTools</li>
+            <li><strong>runtime type introspection</strong>: every model written with tcomb is inspectable at runtime</li>
+            <li><strong>JSON</strong>: encodes/decodes domain models to/from JSON for free</li>
+          </ul>
         </div>
         <div class="col-md-4">
           <h2 class="text-center">Articles</h2>
@@ -100,17 +111,6 @@
             <li><a href="http://gcanti.github.io/2014/09/15/json-api-validation-in-node.html">JSON API Validation In Node.js</a></li>
           </ul>
         </div>
-        <div class="col-md-4">
-          <h2 class="text-center">Features</h2>
-          <ul class="task-list">
-            <li>write <b>complex domain models</b> in a breeze and with a small code footprint</li>
-            <li>easy debugging</li>
-            <li>instances are <b>immutables</b> by default</li>
-            <li>encodes/decodes domain models to/from JSON for free</li>
-            <li><b>Runtime type introspection</b></li>
-          </ul>
-          <p>The library provides a built-in <code>assert</code> function, if an assert fails the <b>debugger kicks in</b> so you can inspect the stack and quickly find out what's wrong.</p>
-        </div>
       </div>
     </div>
     <div class="container">
@@ -120,7 +120,7 @@
             <a href="https://twitter.com/GiulioCanti">Twitter</a> -
             <a href="https://gcanti.github.io">Blog</a> -
             <a href="https://github.com/gcanti/tcomb">Github</a> -
-            <a href="guide/index.html">Docs</a>
+            <a href="https://github.com/gcanti/tcomb/blob/master/GUIDE.md">Docs</a>
           </div>
           <div class="col-xs-6 text-right">
             Open source (MIT). Made by Giulio Canti

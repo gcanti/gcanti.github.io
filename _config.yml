@@ -21,18 +21,18 @@ projects_list:
 projects:
  flowcheck:
   name: flowcheck
-  link: https://gcanti.github.io/flowcheck
-  markdown: "[flowcheck](https://gcanti.github.io/flowcheck)"
+  link: ./flowcheck
+  markdown: "[flowcheck](./flowcheck)"
   description: "Runtime type checking for Flow."
  tcomb-form:
   name: tcomb-form
-  link: https://gcanti.github.io/tcomb-form
-  markdown: "[tcomb-form](https://gcanti.github.io/tcomb-form)"
+  link: ./tcomb-form
+  markdown: "[tcomb-form](./tcomb-form)"
   description: "React.js powered UI library for developing forms writing less code."
  tcomb:
   name: tcomb
-  link: https://gcanti.github.io/tcomb
-  markdown: "[tcomb](https://gcanti.github.io/tcomb)"
+  link: ./tcomb
+  markdown: "[tcomb](./tcomb)"
   description: "Pragmatic runtime type checking for JavaScript based on set theory."
  tcomb-validation:
   name: tcomb-validation
