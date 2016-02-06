@@ -1,6 +1,6 @@
 # Dependencies
 highlighter: rouge
-markdown: redcarpet
+markdown: kramdown
 
 # Setup
 title: Giulio Canti's Blog
