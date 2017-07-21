@@ -13,29 +13,3 @@ author:
 baseurl: /
 about: "<a href='/about.html'>about me</a>"
 blog: "<a href='/'>blog</a>"
-projects_list:
- - tcomb
- - tcomb-form
- - tcomb-validation
- - flowcheck
-projects:
- flowcheck:
-  name: flowcheck
-  link: ./flowcheck
-  markdown: "[flowcheck](./flowcheck)"
-  description: "Runtime type checking for Flow."
- tcomb-form:
-  name: tcomb-form
-  link: ./tcomb-form
-  markdown: "[tcomb-form](./tcomb-form)"
-  description: "Forms library for React."
- tcomb:
-  name: tcomb
-  link: ./tcomb
-  markdown: "[tcomb](./tcomb)"
-  description: "Type checking and domain driven design for JavaScript."
- tcomb-validation:
-  name: tcomb-validation
-  link: https://github.com/gcanti/tcomb-validation
-  markdown: "[tcomb-validation](https://github.com/gcanti/tcomb-validation)"
-  description: "Validation library based on type combinators."

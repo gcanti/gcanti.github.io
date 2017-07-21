@@ -25,9 +25,3 @@ title: Giulio Canti
     </li>
   {% endfor %}
 </ul>
-<h2>Projects</h2>
-
-{% for id in site.projects_list %}
-<h3><a href="{{ site.projects[id].link }}">{{ site.projects[id].name }}</a></h3>
-<p>{{ site.projects[id].description }}</p>
-{% endfor %}
